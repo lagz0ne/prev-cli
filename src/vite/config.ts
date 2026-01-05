@@ -10,6 +10,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
+import { entryPlugin } from './plugins/entry-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -38,7 +39,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
           [rehypeMermaid, { strategy: 'img-svg' }]
         ]
       }),
-      pagesPlugin(rootDir)
+      pagesPlugin(rootDir),
+      entryPlugin()
     ],
 
     resolve: {
