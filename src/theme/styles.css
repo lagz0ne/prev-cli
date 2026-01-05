@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Google Fonts - DM Sans and IBM Plex Mono */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
 @custom-variant dark (&:is(.dark *));
 
 /* Scan CLI source files for Tailwind classes */
@@ -208,5 +211,66 @@
     to {
       height: 0;
     }
+  }
+}
+
+/* Prose styling with stone palette */
+@layer base {
+  .prose {
+    --tw-prose-body: var(--foreground);
+    --tw-prose-headings: var(--foreground);
+    --tw-prose-lead: var(--muted-foreground);
+    --tw-prose-links: var(--primary);
+    --tw-prose-bold: var(--foreground);
+    --tw-prose-counters: var(--muted-foreground);
+    --tw-prose-bullets: var(--muted-foreground);
+    --tw-prose-hr: var(--border);
+    --tw-prose-quotes: var(--foreground);
+    --tw-prose-quote-borders: var(--border);
+    --tw-prose-captions: var(--muted-foreground);
+    --tw-prose-kbd: var(--foreground);
+    --tw-prose-kbd-shadows: var(--ring);
+    --tw-prose-code: var(--foreground);
+    --tw-prose-pre-code: var(--foreground);
+    --tw-prose-pre-bg: var(--muted);
+    --tw-prose-th-borders: var(--border);
+    --tw-prose-td-borders: var(--border);
+  }
+
+  .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply bg-muted px-1.5 py-0.5 rounded-sm text-sm font-mono;
+  }
+
+  .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::before,
+  .prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::after {
+    content: none;
+  }
+
+  .prose :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply bg-muted border border-border rounded-lg;
+  }
+
+  .prose :where(a):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply text-foreground font-medium underline underline-offset-4 decoration-border hover:decoration-foreground transition-colors;
+  }
+
+  .prose :where(h1, h2, h3, h4, h5, h6):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply font-display;
+  }
+
+  .prose :where(blockquote):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply border-l-4 border-border pl-4 italic text-muted-foreground;
+  }
+
+  .prose :where(table):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply w-full border-collapse;
+  }
+
+  .prose :where(th):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply border-b border-border px-4 py-2 text-left font-semibold;
+  }
+
+  .prose :where(td):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    @apply border-b border-border px-4 py-2;
   }
 }

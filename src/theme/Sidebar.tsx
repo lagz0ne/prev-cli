@@ -13,7 +13,7 @@ export function Sidebar() {
   const location = useLocation()
 
   return (
-    <aside className="w-64 border-r border-border p-4 min-h-screen sticky top-0">
+    <aside className="w-64 border-r border-sidebar-border bg-sidebar p-4 min-h-screen sticky top-0">
       <nav>
         <ul className="space-y-1">
           {(sidebar as SidebarItem[]).map((item, i) => (
@@ -40,11 +40,11 @@ function SidebarItemComponent({
 
   if (item.children) {
     return (
-      <li>
-        <span className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+      <li className="mt-4 first:mt-0">
+        <span className="font-semibold text-xs text-sidebar-foreground/60 uppercase tracking-wider">
           {item.title}
         </span>
-        <ul className="ml-3 mt-1 space-y-1">
+        <ul className="ml-3 mt-2 space-y-1">
           {item.children.map((child, i) => (
             <SidebarItemComponent
               key={i}
@@ -62,10 +62,10 @@ function SidebarItemComponent({
       <Link
         to={item.route || '/'}
         className={cn(
-          'block py-1 px-2 rounded text-sm transition-colors',
+          'block py-1.5 px-2 rounded-md text-sm transition-colors',
           isActive
-            ? 'bg-accent text-accent-foreground font-medium'
-            : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
+            : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50'
         )}
       >
         {item.title}
