@@ -13,6 +13,10 @@ import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// In dist, __dirname is dist/vite, but we need paths relative to project root
+const cliRoot = path.join(__dirname, '../..')
+const cliNodeModules = path.join(cliRoot, 'node_modules')
+const srcRoot = path.join(cliRoot, 'src')
 
 export interface ConfigOptions {
   rootDir: string
@@ -45,14 +49,28 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
 
     resolve: {
       alias: {
-        '@prev/ui': path.join(__dirname, '../ui'),
-        '@prev/theme': path.join(__dirname, '../theme')
+        '@prev/ui': path.join(srcRoot, 'ui'),
+        '@prev/theme': path.join(srcRoot, 'theme'),
+        'react': path.join(cliNodeModules, 'react'),
+        'react-dom': path.join(cliNodeModules, 'react-dom'),
+        'react-router-dom': path.join(cliNodeModules, 'react-router-dom')
       }
+    },
+
+    optimizeDeps: {
+      entries: [],  // Don't scan user's project for deps
+    },
+
+    ssr: {
+      noExternal: true
     },
 
     server: {
       port,
-      strictPort: false
+      strictPort: false,
+      fs: {
+        allow: [rootDir, cliRoot]  // Allow access to user's project and CLI source
+      }
     },
 
     build: {
