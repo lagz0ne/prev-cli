@@ -8,13 +8,34 @@ import rehypeHighlight from 'rehype-highlight'
 import rehypeMermaid from 'rehype-mermaid'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { existsSync, readFileSync } from 'fs'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// In dist, __dirname is dist/vite, but we need paths relative to project root
-const cliRoot = path.join(__dirname, '../..')
+// Find CLI root by locating package.json from the script location
+function findCliRoot(): string {
+  let dir = path.dirname(fileURLToPath(import.meta.url))
+
+  for (let i = 0; i < 10; i++) {
+    const pkgPath = path.join(dir, 'package.json')
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+        if (pkg.name === 'prev-cli') {
+          return dir
+        }
+      } catch {}
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+
+  return path.dirname(path.dirname(fileURLToPath(import.meta.url)))
+}
+
+const cliRoot = findCliRoot()
 const cliNodeModules = path.join(cliRoot, 'node_modules')
 const srcRoot = path.join(cliRoot, 'src')
 

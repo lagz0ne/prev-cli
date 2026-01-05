@@ -2,10 +2,35 @@
 import type { Plugin } from 'vite'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { existsSync, readFileSync } from 'fs'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-// In dist, __dirname is dist/vite/plugins, but we need src/theme
-const srcRoot = path.join(__dirname, '../../../src')
+// Find CLI root by locating package.json from the script location
+function findCliRoot(): string {
+  // Start from the directory of this script (works for both bundled and unbundled)
+  let dir = path.dirname(fileURLToPath(import.meta.url))
+
+  // Walk up until we find package.json with name "prev-cli"
+  for (let i = 0; i < 10; i++) {
+    const pkgPath = path.join(dir, 'package.json')
+    if (existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+        if (pkg.name === 'prev-cli') {
+          return dir
+        }
+      } catch {}
+    }
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+
+  // Fallback: assume we're in dist/ and go up one level
+  return path.dirname(path.dirname(fileURLToPath(import.meta.url)))
+}
+
+const cliRoot = findCliRoot()
+const srcRoot = path.join(cliRoot, 'src')
 
 export function entryPlugin(): Plugin {
   const entryPath = path.join(srcRoot, 'theme/entry.tsx')
