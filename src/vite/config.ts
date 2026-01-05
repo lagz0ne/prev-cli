@@ -86,10 +86,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'react-dom/client',
         'react-router-dom',
         'react/jsx-runtime',
-        'react/jsx-dev-runtime',
-        'clsx',
-        'class-variance-authority',
-        'tailwind-merge'
+        'react/jsx-dev-runtime'
       ]
     },
 
