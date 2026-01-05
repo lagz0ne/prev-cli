@@ -5,7 +5,7 @@ import { getRandomPort, isPortAvailable } from './port'
 test('getRandomPort returns a number in valid range', async () => {
   const port = await getRandomPort()
   expect(port).toBeGreaterThanOrEqual(3000)
-  expect(port).toBeLessThanOrEqual(65535)
+  expect(port).toBeLessThanOrEqual(9000)  // Match actual default maxPort
 })
 
 test('getRandomPort returns different ports on subsequent calls', async () => {
