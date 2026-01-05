@@ -107,6 +107,11 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       }
     },
 
+    preview: {
+      port,
+      strictPort: false
+    },
+
     build: {
       outDir: path.join(rootDir, 'dist')
     }

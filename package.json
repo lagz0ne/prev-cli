@@ -35,7 +35,9 @@
   "scripts": {
     "build": "bun build src/cli.ts --outdir dist --target node --packages external && tsc --emitDeclarationOnly",
     "dev": "tsc --watch",
-    "test": "bun test"
+    "test": "bun test src",
+    "test:integration": "bun run build && bun test test/integration.test.ts",
+    "test:all": "bun run test && bun run test:integration"
   },
   "dependencies": {
     "@mdx-js/rollup": "^3.0.0",
