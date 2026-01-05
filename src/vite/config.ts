@@ -80,6 +80,17 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
 
     optimizeDeps: {
       entries: [],  // Don't scan user's project for deps
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react-router-dom',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'clsx',
+        'class-variance-authority',
+        'tailwind-merge'
+      ]
     },
 
     ssr: {

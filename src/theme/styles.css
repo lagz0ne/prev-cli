@@ -1,6 +1,4 @@
-/* Google Fonts - DM Sans and IBM Plex Mono */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
-
+/* Fonts loaded via HTML preload for better performance */
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
