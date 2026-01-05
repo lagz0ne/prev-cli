@@ -1,3 +1,8 @@
+## Communication
+
+When asking clarifying questions, always use the AskUserQuestion tool instead of typing questions directly.
+
+## Runtime
 
 Default to using Bun instead of Node.js.
 

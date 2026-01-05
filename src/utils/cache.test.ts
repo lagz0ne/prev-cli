@@ -1,7 +1,7 @@
 // src/utils/cache.test.ts
 import { test, expect, beforeEach, afterEach } from 'bun:test'
 import { getCacheDir, cleanCache } from './cache'
-import { mkdir, rm, writeFile } from 'fs/promises'
+import { mkdir, rm, utimes } from 'fs/promises'
 import path from 'path'
 import os from 'os'
 
@@ -40,10 +40,10 @@ test('cleanCache removes directories older than maxAgeDays', async () => {
   await mkdir(oldDir, { recursive: true })
   await mkdir(newDir, { recursive: true })
 
-  // Set old dir mtime to 40 days ago
+  // Set old dir mtime to 40 days ago using utimes
   const oldTime = new Date(Date.now() - 40 * 24 * 60 * 60 * 1000)
-  await writeFile(path.join(oldDir, '.marker'), '')
+  await utimes(oldDir, oldTime, oldTime)
 
   const removed = await cleanCache({ maxAgeDays: 30, cacheRoot: testCacheRoot })
-  expect(removed).toBeGreaterThanOrEqual(0)
+  expect(removed).toBe(1)
 })
