@@ -65,7 +65,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       react(),
       tailwindcss(),
       pagesPlugin(rootDir),
-      entryPlugin()
+      entryPlugin(rootDir)
     ],
 
     resolve: {

@@ -2,7 +2,7 @@
 import type { Plugin } from 'vite'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from 'fs'
 
 // Find CLI root by locating package.json from the script location
 function findCliRoot(): string {
@@ -32,10 +32,11 @@ function findCliRoot(): string {
 const cliRoot = findCliRoot()
 const srcRoot = path.join(cliRoot, 'src')
 
-export function entryPlugin(): Plugin {
-  const entryPath = path.join(srcRoot, 'theme/entry.tsx')
+function getHtml(entryPath: string, forBuild = false): string {
+  // For build, use relative path; for dev, use /@fs/ path
+  const scriptSrc = forBuild ? entryPath : `/@fs${entryPath}`
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -50,14 +51,45 @@ export function entryPlugin(): Plugin {
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/@fs${entryPath}"></script>
+  <script type="module" src="${scriptSrc}"></script>
 </body>
 </html>`
+}
+
+export function entryPlugin(rootDir?: string): Plugin {
+  const entryPath = path.join(srcRoot, 'theme/entry.tsx')
+  let tempHtmlPath: string | null = null
 
   return {
     name: 'prev-entry',
 
+    config(config, { command }) {
+      if (command === 'build' && rootDir) {
+        // For build, write a temp HTML file with the entry
+        tempHtmlPath = path.join(rootDir, 'index.html')
+        writeFileSync(tempHtmlPath, getHtml(entryPath, true))
+
+        return {
+          build: {
+            rollupOptions: {
+              input: tempHtmlPath
+            }
+          }
+        }
+      }
+    },
+
+    buildEnd() {
+      // Clean up temp HTML after build
+      if (tempHtmlPath && existsSync(tempHtmlPath)) {
+        unlinkSync(tempHtmlPath)
+        tempHtmlPath = null
+      }
+    },
+
     configureServer(server) {
+      const html = getHtml(entryPath, false)
+
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || '/'
 
