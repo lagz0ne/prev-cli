@@ -1,5 +1,5 @@
 // src/vite/pages.ts
-import { glob } from 'fast-glob'
+import fg from 'fast-glob'
 import { readFile } from 'fs/promises'
 import path from 'path'
 
@@ -30,7 +30,7 @@ export function fileToRoute(file: string): string {
 }
 
 export async function scanPages(rootDir: string): Promise<Page[]> {
-  const files = await glob('**/*.mdx', {
+  const files = await fg.glob('**/*.mdx', {
     cwd: rootDir,
     ignore: ['node_modules/**', 'dist/**', '.cache/**']
   })
