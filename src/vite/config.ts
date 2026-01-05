@@ -34,8 +34,6 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     cacheDir,
 
     plugins: [
-      react(),
-      tailwindcss(),
       mdx({
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
@@ -43,6 +41,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
           [rehypeMermaid, { strategy: 'img-svg' }]
         ]
       }),
+      react(),
+      tailwindcss(),
       pagesPlugin(rootDir),
       entryPlugin()
     ],
