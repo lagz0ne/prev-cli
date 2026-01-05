@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Scan CLI source files for Tailwind classes */
+@source "../theme";
+@source "../ui";
+
 :root {
   --background: 0 0% 100%;
   --foreground: 0 0% 3.9%;
