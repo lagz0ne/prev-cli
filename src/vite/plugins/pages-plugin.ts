@@ -28,7 +28,7 @@ export function pagesPlugin(rootDir: string): Plugin {
     },
 
     handleHotUpdate({ file, server }) {
-      if (file.endsWith('.mdx')) {
+      if (file.endsWith('.mdx') || file.endsWith('.md')) {
         const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID)
         if (mod) {
           server.moduleGraph.invalidateModule(mod)

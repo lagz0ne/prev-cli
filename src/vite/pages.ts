@@ -30,7 +30,7 @@ export function fileToRoute(file: string): string {
 }
 
 export async function scanPages(rootDir: string): Promise<Page[]> {
-  const files = await fg.glob('**/*.mdx', {
+  const files = await fg.glob('**/*.{md,mdx}', {
     cwd: rootDir,
     ignore: ['node_modules/**', 'dist/**', '.cache/**']
   })

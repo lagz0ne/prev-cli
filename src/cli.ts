@@ -8,14 +8,15 @@ const { values, positionals } = parseArgs({
   options: {
     port: { type: 'string', short: 'p' },
     days: { type: 'string', short: 'd' },
+    cwd: { type: 'string', short: 'c' },
     help: { type: 'boolean', short: 'h' }
   },
   allowPositionals: true
 })
 
 const command = positionals[0] || 'dev'
-// If second positional is provided, use it as rootDir, otherwise use cwd
-const rootDir = positionals[1] || process.cwd()
+// Priority: --cwd option > positional argument > process.cwd()
+const rootDir = values.cwd || positionals[1] || process.cwd()
 
 function printHelp() {
   console.log(`
@@ -31,6 +32,7 @@ Commands:
   clean     Remove old cache directories
 
 Options:
+  -c, --cwd <path>    Set working directory
   -p, --port <port>   Specify port (dev/preview)
   -d, --days <days>   Cache age threshold for clean (default: 30)
   -h, --help          Show this help message

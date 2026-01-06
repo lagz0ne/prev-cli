@@ -54,7 +54,7 @@ function convertToPageTree(items: any[]): PageTree.Root {
 }
 
 // Dynamic imports for MDX pages
-const pageModules = import.meta.glob('/**/*.mdx', { eager: true })
+const pageModules = import.meta.glob('/**/*.{md,mdx}', { eager: true })
 
 function getPageComponent(file: string): React.ComponentType | null {
   const mod = pageModules[`/${file}`] as { default: React.ComponentType } | undefined

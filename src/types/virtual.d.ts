@@ -21,6 +21,12 @@ declare module '*.mdx' {
   export default component
 }
 
+declare module '*.md' {
+  import type { ComponentType } from 'react'
+  const component: ComponentType
+  export default component
+}
+
 // Vite's import.meta.glob support
 interface ImportMeta {
   glob<T = unknown>(

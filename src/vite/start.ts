@@ -20,7 +20,7 @@ function printWelcome(type: 'dev' | 'preview') {
 
 function printReady() {
   console.log()
-  console.log('  Edit your .mdx files and see changes instantly.')
+  console.log('  Edit your .md/.mdx files and see changes instantly.')
   console.log('  Press Ctrl+C to stop.')
   console.log()
 }
