@@ -14,7 +14,8 @@ const { values, positionals } = parseArgs({
 })
 
 const command = positionals[0] || 'dev'
-const rootDir = process.cwd()
+// If second positional is provided, use it as rootDir, otherwise use cwd
+const rootDir = positionals[1] || process.cwd()
 
 function printHelp() {
   console.log(`
