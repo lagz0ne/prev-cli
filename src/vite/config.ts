@@ -35,8 +35,34 @@ function findCliRoot(): string {
   return path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 }
 
+// Find node_modules containing react - handles hoisted deps (bunx, npm, pnpm)
+function findNodeModules(cliRoot: string): string {
+  // First check if there's a local node_modules inside cliRoot
+  const localNodeModules = path.join(cliRoot, 'node_modules')
+  if (existsSync(path.join(localNodeModules, 'react'))) {
+    return localNodeModules
+  }
+
+  // Otherwise, traverse up to find hoisted node_modules (bunx/npm case)
+  let dir = cliRoot
+  for (let i = 0; i < 10; i++) {
+    const parent = path.dirname(dir)
+    if (parent === dir) break
+
+    // Check if parent is a node_modules folder containing react
+    if (path.basename(parent) === 'node_modules' && existsSync(path.join(parent, 'react'))) {
+      return parent
+    }
+
+    dir = parent
+  }
+
+  // Fallback to local node_modules
+  return localNodeModules
+}
+
 const cliRoot = findCliRoot()
-const cliNodeModules = path.join(cliRoot, 'node_modules')
+const cliNodeModules = findNodeModules(cliRoot)
 const srcRoot = path.join(cliRoot, 'src')
 
 export interface ConfigOptions {
