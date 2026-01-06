@@ -2,7 +2,6 @@
 import type { InlineConfig, Logger } from 'vite'
 import { createLogger } from 'vite'
 import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite'
 import mdx from '@mdx-js/rollup'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -12,6 +11,7 @@ import { existsSync, readFileSync } from 'fs'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
+import { fumadocsPlugin } from './plugins/fumadocs-plugin'
 
 // Create a friendly logger that filters out technical noise
 function createFriendlyLogger(): Logger {
@@ -150,28 +150,40 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     logLevel: mode === 'production' ? 'silent' : 'info',
 
     plugins: [
+      fumadocsPlugin(cliNodeModules),
       mdx({
         remarkPlugins: [remarkGfm],
         rehypePlugins: [rehypeHighlight]
       }),
       react(),
-      tailwindcss(),
       pagesPlugin(rootDir),
       entryPlugin(rootDir)
     ],
 
     resolve: {
       alias: {
+        // Project aliases
         '@prev/ui': path.join(srcRoot, 'ui'),
         '@prev/theme': path.join(srcRoot, 'theme'),
+        // React aliases - ensure single instances
         'react': path.join(cliNodeModules, 'react'),
         'react-dom': path.join(cliNodeModules, 'react-dom'),
-        'react-router-dom': path.join(cliNodeModules, 'react-router-dom'),
-        // Alias diagram libraries for dynamic imports (bunx compatibility)
+        '@tanstack/react-router': path.join(cliNodeModules, '@tanstack/react-router'),
+        // Diagram libraries
         'mermaid': path.join(cliNodeModules, 'mermaid'),
         'dayjs': path.join(cliNodeModules, 'dayjs'),
-        '@terrastruct/d2': path.join(cliNodeModules, '@terrastruct/d2')
-      }
+        '@terrastruct/d2': path.join(cliNodeModules, '@terrastruct/d2'),
+        // NOTE: Fumadocs packages handled entirely by fumadocsPlugin
+      },
+      // Dedupe to prevent multiple module instances (critical for React contexts)
+      dedupe: [
+        'react',
+        'react-dom',
+        '@tanstack/react-router',
+        'fumadocs-core',
+        'fumadocs-ui',
+        '@fumadocs/ui'
+      ]
     },
 
     optimizeDeps: {
@@ -180,18 +192,20 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'react',
         'react-dom',
         'react-dom/client',
-        'react-router-dom',
+        '@tanstack/react-router',
         'react/jsx-runtime',
         'react/jsx-dev-runtime',
         // Pre-bundle mermaid and its deps to fix ESM issues
         'mermaid',
         'dayjs',
-        '@terrastruct/d2'
-      ],
-      exclude: [
-        'clsx',
-        'class-variance-authority',
-        'tailwind-merge'
+        '@terrastruct/d2',
+        // Pre-bundle fumadocs to ensure single module instances
+        'fumadocs-core/framework',
+        'fumadocs-core/framework/tanstack',
+        'fumadocs-core/link',
+        'fumadocs-core/breadcrumb',
+        'fumadocs-ui/provider/tanstack',
+        'fumadocs-ui/layouts/docs'
       ]
     },
 

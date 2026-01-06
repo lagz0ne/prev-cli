@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
-import { Sidebar } from './Sidebar'
-import './styles.css'
+import { useEffect } from 'react'
+import { useLocation } from '@tanstack/react-router'
 
 // Simple hash function for cache keys
 function hashCode(str: string): string {
@@ -159,7 +157,8 @@ async function renderDiagrams() {
   ])
 }
 
-export function Layout() {
+// Hook for diagram rendering
+export function useDiagrams() {
   const location = useLocation()
 
   useEffect(() => {
@@ -172,17 +171,4 @@ export function Layout() {
       cleanupDiagrams()
     }
   }, [location.pathname])
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-8 max-w-4xl animate-fade-in">
-          <article className="prose max-w-none">
-            <Outlet />
-          </article>
-        </main>
-      </div>
-    </div>
-  )
 }
