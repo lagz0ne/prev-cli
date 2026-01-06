@@ -5,7 +5,6 @@ import tailwindcss from '@tailwindcss/vite'
 import mdx from '@mdx-js/rollup'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
-import rehypeMermaid from 'rehype-mermaid'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { existsSync, readFileSync } from 'fs'
@@ -83,10 +82,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     plugins: [
       mdx({
         remarkPlugins: [remarkGfm],
-        rehypePlugins: [
-          rehypeHighlight,
-          [rehypeMermaid, { strategy: 'pre-mermaid' }]
-        ]
+        rehypePlugins: [rehypeHighlight]
       }),
       react(),
       tailwindcss(),
