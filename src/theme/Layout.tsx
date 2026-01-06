@@ -3,13 +3,56 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import './styles.css'
 
+// Simple hash function for cache keys
+function hashCode(str: string): string {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash // Convert to 32bit integer
+  }
+  return hash.toString(36)
+}
+
+// In-memory cache for current session
+const memoryCache = new Map<string, string>()
+
+// Get cached SVG (memory first, then localStorage)
+function getCachedSvg(type: string, code: string): string | null {
+  const key = `prev-diagram-${type}-${hashCode(code)}`
+
+  // Check memory cache first
+  if (memoryCache.has(key)) {
+    return memoryCache.get(key)!
+  }
+
+  // Check localStorage
+  try {
+    const cached = localStorage.getItem(key)
+    if (cached) {
+      memoryCache.set(key, cached) // Populate memory cache
+      return cached
+    }
+  } catch {}
+
+  return null
+}
+
+// Cache SVG (both memory and localStorage)
+function cacheSvg(type: string, code: string, svg: string): void {
+  const key = `prev-diagram-${type}-${hashCode(code)}`
+  memoryCache.set(key, svg)
+  try {
+    localStorage.setItem(key, svg)
+  } catch {} // Ignore quota errors
+}
+
 // Lazy-load and render mermaid diagrams
 async function renderMermaidDiagrams() {
   const codeBlocks = document.querySelectorAll('code.language-mermaid, code.hljs.language-mermaid')
   if (codeBlocks.length === 0) return
 
-  const mermaid = await import('mermaid')
-  mermaid.default.initialize({ startOnLoad: false, theme: 'neutral' })
+  let mermaidModule: any = null
 
   for (const block of codeBlocks) {
     const pre = block.parentElement as HTMLElement
@@ -20,10 +63,25 @@ async function renderMermaidDiagrams() {
     const container = document.createElement('div')
     container.className = 'mermaid-diagram'
 
+    // Check cache first
+    const cached = getCachedSvg('mermaid', code)
+    if (cached) {
+      container.innerHTML = cached
+      pre.style.display = 'none'
+      pre.insertAdjacentElement('afterend', container)
+      continue
+    }
+
+    // Load mermaid only if needed
+    if (!mermaidModule) {
+      mermaidModule = await import('mermaid')
+      mermaidModule.default.initialize({ startOnLoad: false, theme: 'neutral' })
+    }
+
     try {
-      const { svg } = await mermaid.default.render(`mermaid-${Math.random().toString(36).slice(2)}`, code)
+      const { svg } = await mermaidModule.default.render(`mermaid-${Math.random().toString(36).slice(2)}`, code)
       container.innerHTML = svg
-      // Hide original instead of replacing (avoids React DOM conflicts)
+      cacheSvg('mermaid', code, svg)
       pre.style.display = 'none'
       pre.insertAdjacentElement('afterend', container)
     } catch (e) {
@@ -37,33 +95,48 @@ async function renderD2Diagrams() {
   const codeBlocks = document.querySelectorAll('code.language-d2, code.hljs.language-d2')
   if (codeBlocks.length === 0) return
 
-  try {
-    const d2Module = await import('@terrastruct/d2')
-    const { D2 } = d2Module
-    const d2 = new D2()
+  let d2Instance: any = null
 
-    for (const block of codeBlocks) {
-      const pre = block.parentElement as HTMLElement
-      if (!pre || pre.dataset.rendered) continue
-      pre.dataset.rendered = 'true'
+  for (const block of codeBlocks) {
+    const pre = block.parentElement as HTMLElement
+    if (!pre || pre.dataset.rendered) continue
+    pre.dataset.rendered = 'true'
 
-      const code = block.textContent || ''
-      const container = document.createElement('div')
-      container.className = 'd2-diagram'
+    const code = block.textContent || ''
+    const container = document.createElement('div')
+    container.className = 'd2-diagram'
 
+    // Check cache first
+    const cached = getCachedSvg('d2', code)
+    if (cached) {
+      container.innerHTML = cached
+      pre.style.display = 'none'
+      pre.insertAdjacentElement('afterend', container)
+      continue
+    }
+
+    // Load D2 only if needed
+    if (!d2Instance) {
       try {
-        const result = await d2.compile(code)
-        const svg = await d2.render(result.diagram, result.renderOptions)
-        container.innerHTML = svg
-        // Hide original instead of replacing (avoids React DOM conflicts)
-        pre.style.display = 'none'
-        pre.insertAdjacentElement('afterend', container)
+        const d2Module = await import('@terrastruct/d2')
+        const { D2 } = d2Module
+        d2Instance = new D2()
       } catch (e) {
-        console.error('D2 render error:', e)
+        console.error('D2 library load error:', e)
+        return
       }
     }
-  } catch (e) {
-    console.error('D2 library load error:', e)
+
+    try {
+      const result = await d2Instance.compile(code)
+      const svg = await d2Instance.render(result.diagram, result.renderOptions)
+      container.innerHTML = svg
+      cacheSvg('d2', code, svg)
+      pre.style.display = 'none'
+      pre.insertAdjacentElement('afterend', container)
+    } catch (e) {
+      console.error('D2 render error:', e)
+    }
   }
 }
 
