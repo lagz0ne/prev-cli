@@ -83,7 +83,7 @@ describe('prev-cli integration', () => {
     const { stdout, stderr, exitCode } = await runCli(['build'])
 
     expect(exitCode).toBe(0)
-    expect(stdout).toContain('Build complete')
+    expect(stdout).toContain('Done! Your site is ready')
 
     // Check no critical errors (warnings are ok)
     expect(stderr).not.toContain('Error:')
