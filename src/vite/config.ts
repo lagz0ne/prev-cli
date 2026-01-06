@@ -1,5 +1,6 @@
 // src/vite/config.ts
-import type { InlineConfig } from 'vite'
+import type { InlineConfig, Logger } from 'vite'
+import { createLogger } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import tailwindcss from '@tailwindcss/vite'
 import mdx from '@mdx-js/rollup'
@@ -11,6 +12,72 @@ import { existsSync, readFileSync } from 'fs'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
+
+// Create a friendly logger that filters out technical noise
+function createFriendlyLogger(): Logger {
+  const logger = createLogger('info', { allowClearScreen: false })
+
+  // Messages to hide (technical details users don't need)
+  const hiddenPatterns = [
+    /Re-optimizing dependencies/,
+    /new dependencies optimized/,
+    /optimized dependencies changed/,
+    /Dependencies bundled/,
+    /Pre-bundling dependencies/,
+    /\(client\) ✨/,
+  ]
+
+  // Messages to transform into friendlier versions
+  const transformMessage = (msg: string): string | null => {
+    // Hide technical messages
+    for (const pattern of hiddenPatterns) {
+      if (pattern.test(msg)) return null
+    }
+
+    // Transform HMR messages to be friendlier
+    if (msg.includes('hmr update')) {
+      const match = msg.match(/hmr update (.+)/)
+      if (match) {
+        return `  ↻ Updated: ${match[1]}`
+      }
+    }
+
+    if (msg.includes('page reload')) {
+      return '  ↻ Page reloaded'
+    }
+
+    return msg
+  }
+
+  return {
+    ...logger,
+    info(msg, options) {
+      const transformed = transformMessage(msg)
+      if (transformed) logger.info(transformed, options)
+    },
+    warn(msg, options) {
+      // Show warnings but make them friendlier
+      if (!hiddenPatterns.some(p => p.test(msg))) {
+        logger.warn(msg, options)
+      }
+    },
+    warnOnce(msg, options) {
+      if (!hiddenPatterns.some(p => p.test(msg))) {
+        logger.warnOnce(msg, options)
+      }
+    },
+    error(msg, options) {
+      logger.error(msg, options)
+    },
+    clearScreen() {
+      // Don't clear screen - keep history visible
+    },
+    hasErrorLogged(err) {
+      return logger.hasErrorLogged(err)
+    },
+    hasWarned: false
+  }
+}
 
 // Find CLI root by locating package.json from the script location
 function findCliRoot(): string {
@@ -78,6 +145,9 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     root: rootDir,
     mode,
     cacheDir,
+    customLogger: createFriendlyLogger(),
+    // Use 'silent' for production builds to hide file listing
+    logLevel: mode === 'production' ? 'silent' : 'info',
 
     plugins: [
       mdx({
@@ -135,7 +205,10 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     },
 
     build: {
-      outDir: path.join(rootDir, 'dist')
+      outDir: path.join(rootDir, 'dist'),
+      // Suppress verbose build output for non-technical users
+      reportCompressedSize: false,
+      chunkSizeWarningLimit: 10000  // 10MB - hide chunk warnings
     }
   }
 }
