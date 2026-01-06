@@ -5,15 +5,16 @@ import './styles.css'
 
 // Lazy-load and render mermaid diagrams
 async function renderMermaidDiagrams() {
-  const codeBlocks = document.querySelectorAll('code.language-mermaid')
+  const codeBlocks = document.querySelectorAll('code.language-mermaid, code.hljs.language-mermaid')
   if (codeBlocks.length === 0) return
 
   const mermaid = await import('mermaid')
   mermaid.default.initialize({ startOnLoad: false, theme: 'neutral' })
 
   for (const block of codeBlocks) {
-    const pre = block.parentElement
-    if (!pre || pre.dataset.mermaidRendered) continue
+    const pre = block.parentElement as HTMLElement
+    if (!pre || pre.dataset.rendered) continue
+    pre.dataset.rendered = 'true'
 
     const code = block.textContent || ''
     const container = document.createElement('div')
@@ -22,19 +23,59 @@ async function renderMermaidDiagrams() {
     try {
       const { svg } = await mermaid.default.render(`mermaid-${Math.random().toString(36).slice(2)}`, code)
       container.innerHTML = svg
-      pre.replaceWith(container)
+      // Hide original instead of replacing (avoids React DOM conflicts)
+      pre.style.display = 'none'
+      pre.insertAdjacentElement('afterend', container)
     } catch (e) {
       console.error('Mermaid render error:', e)
     }
   }
 }
 
+// Lazy-load and render D2 diagrams
+async function renderD2Diagrams() {
+  const codeBlocks = document.querySelectorAll('code.language-d2, code.hljs.language-d2')
+  if (codeBlocks.length === 0) return
+
+  const { D2 } = await import('@terrastruct/d2')
+  const d2 = new D2()
+
+  for (const block of codeBlocks) {
+    const pre = block.parentElement as HTMLElement
+    if (!pre || pre.dataset.rendered) continue
+    pre.dataset.rendered = 'true'
+
+    const code = block.textContent || ''
+    const container = document.createElement('div')
+    container.className = 'd2-diagram'
+
+    try {
+      const result = await d2.compile(code)
+      const svg = await d2.render(result.diagram)
+      container.innerHTML = svg
+      // Hide original instead of replacing (avoids React DOM conflicts)
+      pre.style.display = 'none'
+      pre.insertAdjacentElement('afterend', container)
+    } catch (e) {
+      console.error('D2 render error:', e)
+    }
+  }
+}
+
+// Render all diagrams
+async function renderDiagrams() {
+  await Promise.all([
+    renderMermaidDiagrams(),
+    renderD2Diagrams()
+  ])
+}
+
 export function Layout() {
   const location = useLocation()
 
   useEffect(() => {
-    // Render mermaid after content loads
-    const timer = setTimeout(renderMermaidDiagrams, 100)
+    // Render diagrams after content loads
+    const timer = setTimeout(renderDiagrams, 100)
     return () => clearTimeout(timer)
   }, [location.pathname])
 

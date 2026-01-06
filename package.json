@@ -1,6 +1,6 @@
 {
   "name": "prev-cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Transform MDX directories into beautiful documentation websites",
   "type": "module",
   "license": "MIT",
@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@mdx-js/rollup": "^3.0.0",
+    "@terrastruct/d2": "^0.1.33",
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-react-swc": "^4.2.2",
     "class-variance-authority": "^0.7.0",
