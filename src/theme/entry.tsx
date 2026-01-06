@@ -6,15 +6,29 @@ import {
   createRootRoute,
   createRoute,
   Outlet,
-  Link,
 } from '@tanstack/react-router'
-import { TanstackProvider } from 'fumadocs-core/framework/tanstack'
-import { DocsLayout } from 'fumadocs-ui/layouts/docs'
-import type { PageTree } from 'fumadocs-core/server'
 import { pages, sidebar } from 'virtual:prev-pages'
 import { useDiagrams } from './diagrams'
-import 'fumadocs-ui/style.css'
+import { Layout } from './Layout'
 import './styles.css'
+
+// PageTree types (simplified from fumadocs-core)
+namespace PageTree {
+  export interface Item {
+    type: 'page'
+    name: string
+    url: string
+  }
+  export interface Folder {
+    type: 'folder'
+    name: string
+    children: (Item | Folder)[]
+  }
+  export interface Root {
+    name: string
+    children: (Item | Folder)[]
+  }
+}
 
 // Convert prev-cli sidebar to Fumadocs PageTree format
 function convertToPageTree(items: any[]): PageTree.Root {
@@ -53,21 +67,16 @@ function PageWrapper({ Component }: { Component: React.ComponentType }) {
   return <Component />
 }
 
-// Root layout with Fumadocs DocsLayout - TanstackProvider wraps inside router
+// Root layout with custom lightweight Layout
 function RootLayout() {
   const pageTree = convertToPageTree(sidebar)
 
   return (
-    <TanstackProvider>
-      <DocsLayout
-        tree={pageTree}
-        nav={{ enabled: false }}
-      >
-        <article className="prev-content">
-          <Outlet />
-        </article>
-      </DocsLayout>
-    </TanstackProvider>
+    <Layout tree={pageTree}>
+      <article className="prev-content">
+        <Outlet />
+      </article>
+    </Layout>
   )
 }
 

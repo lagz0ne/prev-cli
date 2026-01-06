@@ -11,7 +11,7 @@ import { existsSync, readFileSync } from 'fs'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
-import { fumadocsPlugin } from './plugins/fumadocs-plugin'
+// fumadocsPlugin removed - using custom lightweight layout
 
 // Create a friendly logger that filters out technical noise
 function createFriendlyLogger(): Logger {
@@ -150,7 +150,6 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     logLevel: mode === 'production' ? 'silent' : 'info',
 
     plugins: [
-      fumadocsPlugin(cliNodeModules),
       mdx({
         remarkPlugins: [remarkGfm],
         rehypePlugins: [rehypeHighlight]
@@ -180,9 +179,6 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'react',
         'react-dom',
         '@tanstack/react-router',
-        'fumadocs-core',
-        'fumadocs-ui',
-        '@fumadocs/ui'
       ]
     },
 
@@ -198,14 +194,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         // Pre-bundle mermaid and its deps to fix ESM issues
         'mermaid',
         'dayjs',
-        '@terrastruct/d2'
+        '@terrastruct/d2',
       ],
-      // Exclude fumadocs - handled by fumadocsPlugin resolver (pre-bundler can't resolve subpath exports)
-      exclude: [
-        'fumadocs-core',
-        'fumadocs-ui',
-        '@fumadocs/ui'
-      ]
     },
 
     ssr: {
@@ -217,6 +207,13 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       strictPort: false,
       fs: {
         allow: [rootDir, cliRoot]  // Allow access to user's project and CLI source
+      },
+      // Warm up frequently used modules for faster initial load
+      warmup: {
+        clientFiles: [
+          path.join(srcRoot, 'theme/entry.tsx'),
+          path.join(srcRoot, 'theme/styles.css'),
+        ]
       }
     },
 
