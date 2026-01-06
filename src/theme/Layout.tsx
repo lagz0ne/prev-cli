@@ -67,6 +67,17 @@ async function renderD2Diagrams() {
   }
 }
 
+// Clean up rendered diagrams (for navigation)
+function cleanupDiagrams() {
+  // Remove all rendered diagram containers
+  document.querySelectorAll('.mermaid-diagram, .d2-diagram').forEach(el => el.remove())
+  // Reset rendered state on pre elements and restore visibility
+  document.querySelectorAll('pre[data-rendered="true"]').forEach(el => {
+    delete (el as HTMLElement).dataset.rendered;
+    (el as HTMLElement).style.display = ''
+  })
+}
+
 // Render all diagrams
 async function renderDiagrams() {
   await Promise.all([
@@ -79,9 +90,14 @@ export function Layout() {
   const location = useLocation()
 
   useEffect(() => {
+    // Clean up old diagrams before rendering new ones
+    cleanupDiagrams()
     // Render diagrams after content loads
     const timer = setTimeout(renderDiagrams, 100)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      cleanupDiagrams()
+    }
   }, [location.pathname])
 
   return (
