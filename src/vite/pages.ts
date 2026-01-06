@@ -3,10 +3,18 @@ import fg from 'fast-glob'
 import { readFile } from 'fs/promises'
 import path from 'path'
 
+export interface Frontmatter {
+  title?: string
+  description?: string
+  [key: string]: unknown
+}
+
 export interface Page {
   route: string
   title: string
   file: string
+  description?: string
+  frontmatter?: Frontmatter
 }
 
 export interface SidebarItem {
@@ -15,15 +23,67 @@ export interface SidebarItem {
   children?: SidebarItem[]
 }
 
-export function fileToRoute(file: string): string {
-  const withoutExt = file.replace(/\.mdx?$/, '')
+/**
+ * Parse YAML frontmatter from markdown content
+ */
+export function parseFrontmatter(content: string): { frontmatter: Frontmatter; content: string } {
+  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
+  const match = content.match(frontmatterRegex)
 
-  if (withoutExt === 'index') {
-    return '/'
+  if (!match) {
+    return { frontmatter: {}, content }
   }
 
-  if (withoutExt.endsWith('/index')) {
-    return '/' + withoutExt.slice(0, -6)
+  const frontmatterStr = match[1]
+  const restContent = content.slice(match[0].length)
+  const frontmatter: Frontmatter = {}
+
+  // Parse simple YAML key: value pairs
+  for (const line of frontmatterStr.split('\n')) {
+    const colonIndex = line.indexOf(':')
+    if (colonIndex === -1) continue
+
+    const key = line.slice(0, colonIndex).trim()
+    let value: string | boolean | number = line.slice(colonIndex + 1).trim()
+
+    // Remove surrounding quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
+
+    // Parse booleans and numbers
+    if (value === 'true') value = true
+    else if (value === 'false') value = false
+    else if (!isNaN(Number(value)) && value !== '') value = Number(value)
+
+    if (key) {
+      frontmatter[key] = value
+    }
+  }
+
+  return { frontmatter, content: restContent }
+}
+
+/**
+ * Check if a filename is an index file (index.md, index.mdx, README.md, readme.md)
+ */
+function isIndexFile(basename: string): boolean {
+  const lower = basename.toLowerCase()
+  return lower === 'index' || lower === 'readme'
+}
+
+export function fileToRoute(file: string): string {
+  const withoutExt = file.replace(/\.mdx?$/, '')
+  const basename = path.basename(withoutExt).toLowerCase()
+
+  // Root index or readme
+  if (basename === 'index' || basename === 'readme') {
+    const dir = path.dirname(withoutExt)
+    if (dir === '.') {
+      return '/'
+    }
+    return '/' + dir
   }
 
   return '/' + withoutExt
@@ -35,36 +95,71 @@ export async function scanPages(rootDir: string): Promise<Page[]> {
     ignore: ['node_modules/**', 'dist/**', '.cache/**']
   })
 
-  const pages: Page[] = []
+  // Group files by route to handle index/README conflicts
+  const routeMap = new Map<string, { file: string; priority: number }>()
 
   for (const file of files) {
-    const fullPath = path.join(rootDir, file)
-    const content = await readFile(fullPath, 'utf-8')
-    const title = extractTitle(content, file)
+    const route = fileToRoute(file)
+    const basename = path.basename(file, path.extname(file)).toLowerCase()
 
-    pages.push({
+    // index files have higher priority than README files
+    const priority = basename === 'index' ? 1 : basename === 'readme' ? 2 : 0
+
+    const existing = routeMap.get(route)
+    if (!existing || (priority > 0 && priority < existing.priority)) {
+      routeMap.set(route, { file, priority })
+    }
+  }
+
+  const pages: Page[] = []
+
+  for (const { file } of routeMap.values()) {
+    const fullPath = path.join(rootDir, file)
+    const rawContent = await readFile(fullPath, 'utf-8')
+    const { frontmatter, content } = parseFrontmatter(rawContent)
+    const title = extractTitle(content, file, frontmatter)
+
+    const page: Page = {
       route: fileToRoute(file),
       title,
       file
-    })
+    }
+
+    if (frontmatter.description) {
+      page.description = frontmatter.description as string
+    }
+
+    if (Object.keys(frontmatter).length > 0) {
+      page.frontmatter = frontmatter
+    }
+
+    pages.push(page)
   }
 
   return pages.sort((a, b) => a.route.localeCompare(b.route))
 }
 
-function extractTitle(content: string, file: string): string {
+function extractTitle(content: string, file: string, frontmatter?: Frontmatter): string {
+  // 1. Use frontmatter title if available
+  if (frontmatter?.title && typeof frontmatter.title === 'string') {
+    return frontmatter.title
+  }
+
+  // 2. Extract from first H1 heading
   const match = content.match(/^#\s+(.+)$/m)
   if (match) {
     return match[1].trim()
   }
 
-  const basename = path.basename(file, path.extname(file))
-  if (basename === 'index') {
+  // 3. Use directory name for index/readme files
+  const basename = path.basename(file, path.extname(file)).toLowerCase()
+  if (isIndexFile(basename)) {
     const dirname = path.dirname(file)
     return dirname === '.' ? 'Home' : capitalize(path.basename(dirname))
   }
 
-  return capitalize(basename)
+  // 4. Fallback to filename
+  return capitalize(path.basename(file, path.extname(file)))
 }
 
 function capitalize(str: string): string {
