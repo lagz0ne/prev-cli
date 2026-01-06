@@ -87,6 +87,10 @@
   line-height: 1.75;
   color: var(--fd-foreground);
   font-size: 1rem;
+  padding-left: 2.5rem !important;
+  padding-right: 1.5rem !important;
+  padding-top: 0.5rem !important;
+  padding-bottom: 3rem !important;
 }
 
 /* Heading styles with better spacing */
