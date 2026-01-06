@@ -198,14 +198,13 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         // Pre-bundle mermaid and its deps to fix ESM issues
         'mermaid',
         'dayjs',
-        '@terrastruct/d2',
-        // Pre-bundle fumadocs to ensure single module instances
-        'fumadocs-core/framework',
-        'fumadocs-core/framework/tanstack',
-        'fumadocs-core/link',
-        'fumadocs-core/breadcrumb',
-        'fumadocs-ui/provider/tanstack',
-        'fumadocs-ui/layouts/docs'
+        '@terrastruct/d2'
+      ],
+      // Exclude fumadocs - handled by fumadocsPlugin resolver (pre-bundler can't resolve subpath exports)
+      exclude: [
+        'fumadocs-core',
+        'fumadocs-ui',
+        '@fumadocs/ui'
       ]
     },
 
