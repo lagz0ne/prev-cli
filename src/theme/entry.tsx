@@ -63,7 +63,7 @@ function RootLayout() {
         tree={pageTree}
         nav={{ enabled: false }}
       >
-        <article className="prose max-w-none">
+        <article className="prev-content">
           <Outlet />
         </article>
       </DocsLayout>

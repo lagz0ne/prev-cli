@@ -76,20 +76,217 @@
   animation: fade-in 0.2s ease-out;
 }
 
-/* Typography improvements */
-.prose {
-  --tw-prose-body: var(--fd-foreground);
-  --tw-prose-headings: var(--fd-foreground);
-  --tw-prose-links: var(--fd-primary);
-  --tw-prose-code: var(--fd-foreground);
-  --tw-prose-pre-bg: var(--fd-muted);
+/* ===========================================
+   Content Typography & Spacing
+   Using .prev-content for high specificity
+   =========================================== */
+
+/* Content area base */
+.prev-content {
+  max-width: 72ch;
+  line-height: 1.75;
+  color: var(--fd-foreground);
+  font-size: 1rem;
+}
+
+/* Heading styles with better spacing */
+.prev-content h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  color: var(--fd-foreground);
+}
+
+.prev-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid var(--fd-border);
+  line-height: 1.3;
+  color: var(--fd-foreground);
+}
+
+.prev-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2.25rem;
+  margin-bottom: 0.875rem;
+  line-height: 1.4;
+  color: var(--fd-foreground);
+}
+
+.prev-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.625rem;
+  color: var(--fd-foreground);
+}
+
+/* Paragraph spacing */
+.prev-content p {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+/* List styling */
+.prev-content ul,
+.prev-content ol {
+  margin-top: 1.25rem;
+  margin-bottom: 1.75rem;
+  padding-left: 1.75rem;
+}
+
+.prev-content li {
+  margin-top: 0.625rem;
+  margin-bottom: 0.625rem;
+  padding-left: 0.5rem;
+}
+
+.prev-content li::marker {
+  color: var(--fd-muted-foreground);
+}
+
+.prev-content ol {
+  list-style-type: decimal;
+}
+
+.prev-content ul {
+  list-style-type: disc;
+}
+
+/* Nested lists */
+.prev-content li > ul,
+.prev-content li > ol {
+  margin-top: 0.625rem;
+  margin-bottom: 0.625rem;
+}
+
+/* Blockquote styling - callout style */
+.prev-content blockquote {
+  margin: 1.75rem 0;
+  padding: 1rem 1.5rem;
+  border-left: 4px solid var(--fd-primary);
+  background: var(--fd-muted);
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-style: normal;
+}
+
+.prev-content blockquote p {
+  margin: 0;
+}
+
+.prev-content blockquote p:not(:last-child) {
+  margin-bottom: 0.875rem;
 }
 
 /* Code block styling */
-pre code {
+.prev-content pre {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  background: var(--fd-muted);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid var(--fd-border);
+}
+
+.prev-content pre code {
   font-family: var(--fd-font-mono);
   font-size: 0.875rem;
   line-height: 1.7;
+  background: transparent;
+  padding: 0;
+  color: var(--fd-foreground);
+}
+
+/* Inline code styling */
+.prev-content code:not(pre code) {
+  font-family: var(--fd-font-mono);
+  font-size: 0.875em;
+  padding: 0.2em 0.45em;
+  background: var(--fd-muted);
+  border-radius: 0.3rem;
+  font-weight: 500;
+  color: var(--fd-foreground);
+}
+
+/* Table styling */
+.prev-content table {
+  width: 100%;
+  margin: 1.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+}
+
+.prev-content thead {
+  border-bottom: 2px solid var(--fd-border);
+}
+
+.prev-content th {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  background: var(--fd-muted);
+}
+
+.prev-content th:first-child {
+  border-radius: 0.375rem 0 0 0;
+}
+
+.prev-content th:last-child {
+  border-radius: 0 0.375rem 0 0;
+}
+
+.prev-content td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--fd-border);
+}
+
+.prev-content tbody tr:hover {
+  background: var(--fd-muted);
+}
+
+/* Horizontal rule */
+.prev-content hr {
+  margin: 3rem 0;
+  border: none;
+  border-top: 1px solid var(--fd-border);
+}
+
+/* Link styling */
+.prev-content a {
+  color: var(--fd-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--fd-border);
+  text-underline-offset: 3px;
+  transition: all 0.15s ease;
+}
+
+.prev-content a:hover {
+  text-decoration-color: var(--fd-primary);
+}
+
+/* Strong and emphasis */
+.prev-content strong {
+  font-weight: 600;
+  color: var(--fd-foreground);
+}
+
+.prev-content em {
+  font-style: italic;
+}
+
+/* First paragraph after heading - no top margin */
+.prev-content h1 + p,
+.prev-content h2 + p,
+.prev-content h3 + p,
+.prev-content h4 + p {
+  margin-top: 0;
 }
 
 /* Sidebar active item highlight */
