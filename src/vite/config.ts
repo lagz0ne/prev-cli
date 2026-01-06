@@ -166,7 +166,11 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         '@prev/theme': path.join(srcRoot, 'theme'),
         'react': path.join(cliNodeModules, 'react'),
         'react-dom': path.join(cliNodeModules, 'react-dom'),
-        'react-router-dom': path.join(cliNodeModules, 'react-router-dom')
+        'react-router-dom': path.join(cliNodeModules, 'react-router-dom'),
+        // Alias diagram libraries for dynamic imports (bunx compatibility)
+        'mermaid': path.join(cliNodeModules, 'mermaid'),
+        'dayjs': path.join(cliNodeModules, 'dayjs'),
+        '@terrastruct/d2': path.join(cliNodeModules, '@terrastruct/d2')
       }
     },
 
@@ -178,7 +182,11 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'react-dom/client',
         'react-router-dom',
         'react/jsx-runtime',
-        'react/jsx-dev-runtime'
+        'react/jsx-dev-runtime',
+        // Pre-bundle mermaid and its deps to fix ESM issues
+        'mermaid',
+        'dayjs',
+        '@terrastruct/d2'
       ],
       exclude: [
         'clsx',

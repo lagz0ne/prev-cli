@@ -37,28 +37,33 @@ async function renderD2Diagrams() {
   const codeBlocks = document.querySelectorAll('code.language-d2, code.hljs.language-d2')
   if (codeBlocks.length === 0) return
 
-  const { D2 } = await import('@terrastruct/d2')
-  const d2 = new D2()
+  try {
+    const d2Module = await import('@terrastruct/d2')
+    const { D2 } = d2Module
+    const d2 = new D2()
 
-  for (const block of codeBlocks) {
-    const pre = block.parentElement as HTMLElement
-    if (!pre || pre.dataset.rendered) continue
-    pre.dataset.rendered = 'true'
+    for (const block of codeBlocks) {
+      const pre = block.parentElement as HTMLElement
+      if (!pre || pre.dataset.rendered) continue
+      pre.dataset.rendered = 'true'
 
-    const code = block.textContent || ''
-    const container = document.createElement('div')
-    container.className = 'd2-diagram'
+      const code = block.textContent || ''
+      const container = document.createElement('div')
+      container.className = 'd2-diagram'
 
-    try {
-      const result = await d2.compile(code)
-      const svg = await d2.render(result.diagram)
-      container.innerHTML = svg
-      // Hide original instead of replacing (avoids React DOM conflicts)
-      pre.style.display = 'none'
-      pre.insertAdjacentElement('afterend', container)
-    } catch (e) {
-      console.error('D2 render error:', e)
+      try {
+        const result = await d2.compile(code)
+        const svg = await d2.render(result.diagram, result.renderOptions)
+        container.innerHTML = svg
+        // Hide original instead of replacing (avoids React DOM conflicts)
+        pre.style.display = 'none'
+        pre.insertAdjacentElement('afterend', container)
+      } catch (e) {
+        console.error('D2 render error:', e)
+      }
     }
+  } catch (e) {
+    console.error('D2 library load error:', e)
   }
 }
 
