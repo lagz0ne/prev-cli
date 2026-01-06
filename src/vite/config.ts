@@ -85,7 +85,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         remarkPlugins: [remarkGfm],
         rehypePlugins: [
           rehypeHighlight,
-          [rehypeMermaid, { strategy: 'img-svg' }]
+          [rehypeMermaid, { strategy: 'pre-mermaid' }]
         ]
       }),
       react(),
