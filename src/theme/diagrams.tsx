@@ -1,6 +1,195 @@
 import { useEffect } from 'react'
 import { useLocation } from '@tanstack/react-router'
 
+// Diagram controls and fullscreen functionality
+function createDiagramControls(container: HTMLElement): void {
+  // Skip if already has controls
+  if (container.querySelector('.diagram-controls')) return
+
+  const wrapper = document.createElement('div')
+  wrapper.className = 'diagram-wrapper'
+
+  // Move container content to wrapper
+  const svg = container.querySelector('svg')
+  if (!svg) return
+
+  // Create controls
+  const controls = document.createElement('div')
+  controls.className = 'diagram-controls'
+  controls.innerHTML = `
+    <button class="diagram-btn diagram-zoom-in" title="Zoom in">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/>
+      </svg>
+    </button>
+    <button class="diagram-btn diagram-zoom-out" title="Zoom out">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/>
+      </svg>
+    </button>
+    <button class="diagram-btn diagram-fullscreen" title="Fullscreen">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+      </svg>
+    </button>
+  `
+
+  // Track zoom level
+  let scale = 1
+  const minScale = 0.5
+  const maxScale = 3
+  const scaleStep = 0.25
+
+  const updateScale = () => {
+    svg.style.transform = `scale(${scale})`
+    svg.style.transformOrigin = 'center center'
+  }
+
+  // Zoom in
+  controls.querySelector('.diagram-zoom-in')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (scale < maxScale) {
+      scale += scaleStep
+      updateScale()
+    }
+  })
+
+  // Zoom out
+  controls.querySelector('.diagram-zoom-out')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (scale > minScale) {
+      scale -= scaleStep
+      updateScale()
+    }
+  })
+
+  // Fullscreen
+  controls.querySelector('.diagram-fullscreen')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    openFullscreenModal(svg.outerHTML)
+  })
+
+  container.appendChild(controls)
+}
+
+function openFullscreenModal(svgHtml: string): void {
+  // Remove existing modal if any
+  document.querySelector('.diagram-modal')?.remove()
+
+  const modal = document.createElement('div')
+  modal.className = 'diagram-modal'
+
+  let scale = 1
+  let translateX = 0
+  let translateY = 0
+  let isDragging = false
+  let startX = 0
+  let startY = 0
+
+  modal.innerHTML = `
+    <div class="diagram-modal-backdrop"></div>
+    <div class="diagram-modal-content">
+      <div class="diagram-modal-controls">
+        <button class="diagram-btn modal-zoom-in" title="Zoom in">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M11 8v6M8 11h6"/>
+          </svg>
+        </button>
+        <button class="diagram-btn modal-zoom-out" title="Zoom out">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35M8 11h6"/>
+          </svg>
+        </button>
+        <button class="diagram-btn modal-reset" title="Reset view">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+          </svg>
+        </button>
+        <button class="diagram-btn modal-close" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="diagram-modal-svg-container">
+        ${svgHtml}
+      </div>
+    </div>
+  `
+
+  const svgContainer = modal.querySelector('.diagram-modal-svg-container') as HTMLElement
+  const svg = svgContainer?.querySelector('svg') as SVGElement
+
+  const updateTransform = () => {
+    if (svg) {
+      svg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
+      svg.style.transformOrigin = 'center center'
+    }
+  }
+
+  // Zoom controls
+  modal.querySelector('.modal-zoom-in')?.addEventListener('click', () => {
+    scale = Math.min(scale + 0.25, 5)
+    updateTransform()
+  })
+
+  modal.querySelector('.modal-zoom-out')?.addEventListener('click', () => {
+    scale = Math.max(scale - 0.25, 0.25)
+    updateTransform()
+  })
+
+  modal.querySelector('.modal-reset')?.addEventListener('click', () => {
+    scale = 1
+    translateX = 0
+    translateY = 0
+    updateTransform()
+  })
+
+  // Close handlers
+  const closeModal = () => modal.remove()
+  modal.querySelector('.modal-close')?.addEventListener('click', closeModal)
+  modal.querySelector('.diagram-modal-backdrop')?.addEventListener('click', closeModal)
+
+  // Keyboard close
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeModal()
+      document.removeEventListener('keydown', handleKeydown)
+    }
+  }
+  document.addEventListener('keydown', handleKeydown)
+
+  // Pan with mouse drag
+  svgContainer?.addEventListener('mousedown', (e) => {
+    isDragging = true
+    startX = e.clientX - translateX
+    startY = e.clientY - translateY
+    svgContainer.style.cursor = 'grabbing'
+  })
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return
+    translateX = e.clientX - startX
+    translateY = e.clientY - startY
+    updateTransform()
+  })
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false
+    if (svgContainer) svgContainer.style.cursor = 'grab'
+  })
+
+  // Mouse wheel zoom
+  svgContainer?.addEventListener('wheel', (e) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    scale = Math.min(Math.max(scale + delta, 0.25), 5)
+    updateTransform()
+  })
+
+  document.body.appendChild(modal)
+}
+
 // Simple hash function for cache keys
 function hashCode(str: string): string {
   let hash = 0
@@ -67,6 +256,7 @@ async function renderMermaidDiagrams() {
       container.innerHTML = cached
       pre.style.display = 'none'
       pre.insertAdjacentElement('afterend', container)
+      createDiagramControls(container)
       continue
     }
 
@@ -82,6 +272,7 @@ async function renderMermaidDiagrams() {
       cacheSvg('mermaid', code, svg)
       pre.style.display = 'none'
       pre.insertAdjacentElement('afterend', container)
+      createDiagramControls(container)
     } catch (e) {
       console.error('Mermaid render error:', e)
     }
@@ -110,6 +301,7 @@ async function renderD2Diagrams() {
       container.innerHTML = cached
       pre.style.display = 'none'
       pre.insertAdjacentElement('afterend', container)
+      createDiagramControls(container)
       continue
     }
 
@@ -132,6 +324,7 @@ async function renderD2Diagrams() {
       cacheSvg('d2', code, svg)
       pre.style.display = 'none'
       pre.insertAdjacentElement('afterend', container)
+      createDiagramControls(container)
     } catch (e) {
       console.error('D2 render error:', e)
     }

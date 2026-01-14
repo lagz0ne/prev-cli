@@ -1,10 +1,44 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
 
 interface LayoutProps {
   tree: PageTree.Root
   children: React.ReactNode
+}
+
+function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      className="sidebar-toggle"
+      onClick={onToggle}
+      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+    >
+      {collapsed ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 12h18M3 6h18M3 18h18" />
+        </svg>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function CollapsedFolderIcon({ item, onClick }: { item: PageTree.Folder; onClick: () => void }) {
+  return (
+    <button
+      className="sidebar-rail-icon"
+      onClick={onClick}
+      title={item.name}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+    </button>
+  )
 }
 
 interface SidebarItemProps {
@@ -88,25 +122,61 @@ function ThemeToggle() {
 }
 
 export function Layout({ tree, children }: LayoutProps) {
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sidebar-collapsed') === 'true'
+    }
+    return false
+  })
+
   // Initialize theme from localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     const saved = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const isDark = saved === 'dark' || (!saved && prefersDark)
     document.documentElement.classList.toggle('dark', isDark)
   }, [])
 
+  // Persist collapsed state
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', String(collapsed))
+  }, [collapsed])
+
+  const toggleCollapsed = () => setCollapsed(!collapsed)
+
+  // Get top-level folders for collapsed rail
+  const topFolders = tree.children.filter(
+    (item): item is PageTree.Folder => item.type === 'folder'
+  )
+
   return (
-    <div className="prev-layout">
+    <div className={`prev-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="prev-sidebar">
-        <nav className="sidebar-nav">
-          {tree.children.map((item, i) => (
-            <SidebarItem key={i} item={item} />
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <ThemeToggle />
+        <div className="sidebar-header">
+          <SidebarToggle collapsed={collapsed} onToggle={toggleCollapsed} />
         </div>
+        {collapsed ? (
+          <div className="sidebar-rail">
+            {topFolders.map((folder, i) => (
+              <CollapsedFolderIcon
+                key={i}
+                item={folder}
+                onClick={toggleCollapsed}
+              />
+            ))}
+          </div>
+        ) : (
+          <>
+            <nav className="sidebar-nav">
+              {tree.children.map((item, i) => (
+                <SidebarItem key={i} item={item} />
+              ))}
+            </nav>
+            <div className="sidebar-footer">
+              <ThemeToggle />
+            </div>
+          </>
+        )}
       </aside>
       <main className="prev-main">
         {children}
