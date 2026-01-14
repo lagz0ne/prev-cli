@@ -69,6 +69,14 @@ function createDiagramControls(container: HTMLElement): void {
     openFullscreenModal(svg.outerHTML)
   })
 
+  // Scroll wheel zoom on container
+  container.addEventListener('wheel', (e) => {
+    e.preventDefault()
+    const delta = e.deltaY > 0 ? -0.1 : 0.1
+    scale = Math.min(Math.max(scale + delta, minScale), maxScale)
+    updateScale()
+  })
+
   container.appendChild(controls)
 }
 
@@ -165,10 +173,13 @@ function openFullscreenModal(svgHtml: string): void {
     startX = e.clientX - translateX
     startY = e.clientY - translateY
     svgContainer.style.cursor = 'grabbing'
+    svgContainer.style.userSelect = 'none'
+    e.preventDefault() // Prevent text selection on drag start
   })
 
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return
+    e.preventDefault()
     translateX = e.clientX - startX
     translateY = e.clientY - startY
     updateTransform()
@@ -176,7 +187,10 @@ function openFullscreenModal(svgHtml: string): void {
 
   document.addEventListener('mouseup', () => {
     isDragging = false
-    if (svgContainer) svgContainer.style.cursor = 'grab'
+    if (svgContainer) {
+      svgContainer.style.cursor = 'grab'
+      svgContainer.style.userSelect = ''
+    }
   })
 
   // Mouse wheel zoom

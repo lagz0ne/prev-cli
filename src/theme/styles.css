@@ -349,6 +349,8 @@ body {
   justify-content: center;
   cursor: grab;
   padding: 2rem;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .diagram-modal-svg-container svg {
