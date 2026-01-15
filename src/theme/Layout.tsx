@@ -121,6 +121,39 @@ function ThemeToggle() {
   )
 }
 
+function WidthToggle() {
+  const [isFullWidth, setIsFullWidth] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('content-full-width') === 'true'
+    }
+    return false
+  })
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('full-width', isFullWidth)
+  }, [isFullWidth])
+
+  const toggle = () => {
+    const newFullWidth = !isFullWidth
+    setIsFullWidth(newFullWidth)
+    localStorage.setItem('content-full-width', String(newFullWidth))
+  }
+
+  return (
+    <button className="theme-toggle" onClick={toggle} aria-label="Toggle content width">
+      {isFullWidth ? (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/>
+        </svg>
+      ) : (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+        </svg>
+      )}
+    </button>
+  )
+}
+
 export function Layout({ tree, children }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -173,6 +206,7 @@ export function Layout({ tree, children }: LayoutProps) {
               ))}
             </nav>
             <div className="sidebar-footer">
+              <WidthToggle />
               <ThemeToggle />
             </div>
           </>

@@ -165,6 +165,8 @@ body {
 .sidebar-footer {
   padding: 1rem;
   border-top: 1px solid var(--fd-border);
+  display: flex;
+  gap: 0.5rem;
 }
 
 .theme-toggle {
@@ -678,4 +680,12 @@ body {
 
 .metadata-number {
   font-variant-numeric: tabular-nums;
+}
+
+/* ===========================================
+   Full Width Mode
+   =========================================== */
+
+.full-width .prev-content {
+  max-width: none;
 }
