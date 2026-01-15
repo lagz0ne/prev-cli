@@ -26,13 +26,10 @@ function printHelp() {
 prev - Zero-config documentation site generator
 
 Usage:
-  prev [command] [options]
-
-Commands:
-  dev       Start development server (default)
-  build     Build for production
-  preview   Preview production build
-  clean     Remove old cache directories
+  prev [options]              Start development server
+  prev build [options]        Build for production
+  prev preview [options]      Preview production build
+  prev clean [options]        Remove old cache directories
 
 Options:
   -c, --cwd <path>       Set working directory
@@ -41,12 +38,27 @@ Options:
   -d, --days <days>      Cache age threshold for clean (default: 30)
   -h, --help             Show this help message
 
+Previews:
+  Create interactive previews in your docs by adding React components
+  to the previews/ directory:
+
+    previews/
+      my-demo/
+        App.tsx          # React component (entry)
+        styles.css       # Optional CSS
+
+  Then embed in MDX:
+    import { Preview } from '@prev/theme'
+    <Preview src="my-demo" />
+
+  Previews are bundled via esbuild-wasm in dev, and pre-compiled
+  to standalone HTML files in production builds.
+
 Examples:
   prev                       Start dev server on random port
-  prev dev -p 3000           Start dev server on port 3000
+  prev -p 3000               Start dev server on port 3000
   prev build                 Build static site to ./dist
-  prev dev -i .c3            Include .c3 directory in docs
-  prev dev -i .c3 -i .notes  Include multiple dot directories
+  prev -i .c3                Include .c3 directory in docs
   prev clean -d 7            Remove caches older than 7 days
 `)
 }
