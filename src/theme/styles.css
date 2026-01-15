@@ -689,3 +689,46 @@ body {
 .full-width .prev-content {
   max-width: none;
 }
+
+/* ===========================================
+   Drag and Drop Sidebar
+   =========================================== */
+
+.sidebar-item-wrapper {
+  position: relative;
+}
+
+.drag-handle {
+  opacity: 0;
+  cursor: grab;
+  color: var(--fd-muted-foreground);
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+  transition: opacity 0.15s ease;
+}
+
+.sidebar-folder:hover .drag-handle,
+.sidebar-item-wrapper:hover .drag-handle,
+.sidebar-link:hover .drag-handle {
+  opacity: 0.5;
+}
+
+.drag-handle:hover {
+  opacity: 1 !important;
+}
+
+.sidebar-folder.drop-target,
+.sidebar-item-wrapper.drop-target {
+  background: var(--fd-accent);
+  border-radius: 0.375rem;
+}
+
+.sidebar-folder[draggable="true"],
+.sidebar-item-wrapper[draggable="true"] {
+  cursor: grab;
+}
+
+.sidebar-folder[draggable="true"]:active,
+.sidebar-item-wrapper[draggable="true"]:active {
+  cursor: grabbing;
+}
