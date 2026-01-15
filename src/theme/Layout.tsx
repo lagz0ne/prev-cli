@@ -20,6 +20,7 @@ function getStorageKey(path: string): string {
 }
 
 // Apply saved order to items for a specific path
+// Handles: new items (appended), removed items (skipped), stale storage (cleaned)
 function applyOrder(items: TreeItem[], path: string): TreeItem[] {
   if (typeof window === 'undefined') return items
 
@@ -32,7 +33,7 @@ function applyOrder(items: TreeItem[], path: string): TreeItem[] {
   const itemMap = new Map(items.map(item => [getItemId(item), item]))
   const ordered: TreeItem[] = []
 
-  // Add items in saved order
+  // Add items in saved order (skip removed ones)
   for (const id of order) {
     const item = itemMap.get(id)
     if (item) {
@@ -44,6 +45,15 @@ function applyOrder(items: TreeItem[], path: string): TreeItem[] {
   // Add remaining items (new ones not in saved order)
   for (const item of itemMap.values()) {
     ordered.push(item)
+  }
+
+  // Clean up stale entries: if order changed, update storage
+  const currentIds = ordered.map(getItemId)
+  const hasChanges = order.length !== currentIds.length ||
+    order.some((id, i) => currentIds[i] !== id)
+
+  if (hasChanges) {
+    localStorage.setItem(getStorageKey(path), JSON.stringify(currentIds))
   }
 
   return ordered
