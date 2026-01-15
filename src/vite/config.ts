@@ -173,17 +173,28 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         configureServer(server) {
           server.middlewares.use(async (req, res, next) => {
             if (req.url?.startsWith('/_preview/')) {
-              const previewName = req.url.slice('/_preview/'.length).split('?')[0]
-              const htmlPath = path.join(rootDir, 'previews', previewName, 'index.html')
+              const previewName = decodeURIComponent(req.url.slice('/_preview/'.length).split('?')[0])
+              const previewsDir = path.join(rootDir, 'previews')
+              const htmlPath = path.resolve(previewsDir, previewName, 'index.html')
+
+              // Security: prevent path traversal
+              if (!htmlPath.startsWith(previewsDir)) {
+                return next()
+              }
 
               if (existsSync(htmlPath)) {
-                const html = await server.transformIndexHtml(
-                  req.url,
-                  readFileSync(htmlPath, 'utf-8')
-                )
-                res.setHeader('Content-Type', 'text/html')
-                res.end(html)
-                return
+                try {
+                  const html = await server.transformIndexHtml(
+                    req.url,
+                    readFileSync(htmlPath, 'utf-8')
+                  )
+                  res.setHeader('Content-Type', 'text/html')
+                  res.end(html)
+                  return
+                } catch (err) {
+                  console.error('Error serving preview:', err)
+                  return next()
+                }
               }
             }
             next()
