@@ -101,6 +101,10 @@ describe('preview feature integration', () => {
     const assets = await Array.fromAsync(new Bun.Glob('*').scan(assetsDir))
     expect(assets.some(f => f.endsWith('.js'))).toBe(true)
     expect(assets.some(f => f.endsWith('.css'))).toBe(true)
+
+    // Verify preview files are copied to dist/_preview/
+    const previewIndexExists = await Bun.file(join(testDir, 'dist', '_preview', 'demo', 'index.html')).exists()
+    expect(previewIndexExists).toBe(true)
   }, 120000)
 
   test('scanPreviews finds preview directories', async () => {
