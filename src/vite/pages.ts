@@ -24,6 +24,42 @@ export interface SidebarItem {
 }
 
 /**
+ * Parse a value string into typed value (string, boolean, number, or array)
+ */
+function parseValue(value: string): string | boolean | number | string[] {
+  const trimmed = value.trim()
+
+  // Check for inline array: [a, b, c]
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    const inner = trimmed.slice(1, -1)
+    if (inner.trim() === '') return []
+    return inner.split(',').map(item => {
+      let v = item.trim()
+      // Remove quotes from array items
+      if ((v.startsWith('"') && v.endsWith('"')) ||
+          (v.startsWith("'") && v.endsWith("'"))) {
+        v = v.slice(1, -1)
+      }
+      return v
+    })
+  }
+
+  // Remove surrounding quotes
+  let v: string | boolean | number = trimmed
+  if ((v.startsWith('"') && v.endsWith('"')) ||
+      (v.startsWith("'") && v.endsWith("'"))) {
+    v = v.slice(1, -1)
+  }
+
+  // Parse booleans and numbers
+  if (v === 'true') return true
+  if (v === 'false') return false
+  if (!isNaN(Number(v)) && v !== '') return Number(v)
+
+  return v
+}
+
+/**
  * Parse YAML frontmatter from markdown content
  */
 export function parseFrontmatter(content: string): { frontmatter: Frontmatter; content: string } {
@@ -44,21 +80,10 @@ export function parseFrontmatter(content: string): { frontmatter: Frontmatter; c
     if (colonIndex === -1) continue
 
     const key = line.slice(0, colonIndex).trim()
-    let value: string | boolean | number = line.slice(colonIndex + 1).trim()
-
-    // Remove surrounding quotes if present
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1)
-    }
-
-    // Parse booleans and numbers
-    if (value === 'true') value = true
-    else if (value === 'false') value = false
-    else if (!isNaN(Number(value)) && value !== '') value = Number(value)
+    const rawValue = line.slice(colonIndex + 1)
 
     if (key) {
-      frontmatter[key] = value
+      frontmatter[key] = parseValue(rawValue)
     }
   }
 

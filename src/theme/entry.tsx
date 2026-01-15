@@ -10,6 +10,7 @@ import {
 import { pages, sidebar } from 'virtual:prev-pages'
 import { useDiagrams } from './diagrams'
 import { Layout } from './Layout'
+import { MetadataBlock } from './MetadataBlock'
 import './styles.css'
 
 // PageTree types (simplified from fumadocs-core)
@@ -61,10 +62,27 @@ function getPageComponent(file: string): React.ComponentType | null {
   return mod?.default || null
 }
 
+interface PageMeta {
+  title?: string
+  description?: string
+  frontmatter?: Record<string, unknown>
+}
+
 // Page wrapper that renders diagrams after content loads
-function PageWrapper({ Component }: { Component: React.ComponentType }) {
+function PageWrapper({ Component, meta }: { Component: React.ComponentType; meta: PageMeta }) {
   useDiagrams()
-  return <Component />
+  return (
+    <>
+      {meta.frontmatter && Object.keys(meta.frontmatter).length > 0 && (
+        <MetadataBlock
+          frontmatter={meta.frontmatter}
+          title={meta.title}
+          description={meta.description}
+        />
+      )}
+      <Component />
+    </>
+  )
 }
 
 // Root layout with custom lightweight Layout
@@ -86,12 +104,17 @@ const rootRoute = createRootRoute({
 })
 
 // Create routes from pages
-const pageRoutes = pages.map((page: { route: string; file: string }) => {
+const pageRoutes = pages.map((page: { route: string; file: string; title?: string; description?: string; frontmatter?: Record<string, unknown> }) => {
   const Component = getPageComponent(page.file)
+  const meta: PageMeta = {
+    title: page.title,
+    description: page.description,
+    frontmatter: page.frontmatter,
+  }
   return createRoute({
     getParentRoute: () => rootRoute,
     path: page.route === '/' ? '/' : page.route,
-    component: Component ? () => <PageWrapper Component={Component} /> : () => null,
+    component: Component ? () => <PageWrapper Component={Component} meta={meta} /> : () => null,
   })
 })
 

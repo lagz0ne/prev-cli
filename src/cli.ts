@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'util'
+import path from 'path'
 import { startDev, buildSite, previewSite } from './vite/start'
 import { cleanCache } from './utils/cache'
 
@@ -16,7 +17,8 @@ const { values, positionals } = parseArgs({
 
 const command = positionals[0] || 'dev'
 // Priority: --cwd option > positional argument > process.cwd()
-const rootDir = values.cwd || positionals[1] || process.cwd()
+// Always resolve to absolute path to ensure proper cache isolation
+const rootDir = path.resolve(values.cwd || positionals[1] || '.')
 
 function printHelp() {
   console.log(`
