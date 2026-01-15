@@ -4,8 +4,6 @@ type FrontmatterValue = string | number | boolean | string[] | unknown
 
 interface MetadataBlockProps {
   frontmatter: Record<string, FrontmatterValue>
-  title?: string
-  description?: string
 }
 
 // Fields to skip (shown elsewhere or internal)
@@ -102,7 +100,7 @@ function renderValue(key: string, value: FrontmatterValue): React.ReactNode {
   }
 }
 
-export function MetadataBlock({ frontmatter, title, description }: MetadataBlockProps) {
+export function MetadataBlock({ frontmatter }: MetadataBlockProps) {
   // Filter out skipped fields and empty values
   const fields = Object.entries(frontmatter).filter(
     ([key, value]) => !SKIP_FIELDS.has(key) && value !== undefined && value !== null && value !== ''
@@ -111,36 +109,27 @@ export function MetadataBlock({ frontmatter, title, description }: MetadataBlock
   // Check for draft status
   const isDraft = frontmatter.draft === true
 
-  // Only show title/description if they came from frontmatter (not extracted from H1)
-  const hasExplicitTitle = 'title' in frontmatter && frontmatter.title
-  const hasExplicitDescription = 'description' in frontmatter && frontmatter.description
-
-  // If no explicit metadata and no other fields, don't render the block
-  if (fields.length === 0 && !hasExplicitTitle && !hasExplicitDescription && !isDraft) {
+  // If no fields to show, don't render
+  if (fields.length === 0 && !isDraft) {
     return null
   }
 
   return (
     <div className="metadata-block">
-      {hasExplicitTitle && <h1 className="metadata-title">{title}</h1>}
-      {hasExplicitDescription && <p className="metadata-description">{description}</p>}
-
-      {(fields.length > 0 || isDraft) && (
-        <div className="metadata-fields">
-          {isDraft && (
-            <span className="metadata-field metadata-draft">
-              <span className="metadata-chip is-draft">Draft</span>
-            </span>
-          )}
-          {fields.filter(([key]) => key !== 'draft').map(([key, value]) => (
-            <span key={key} className="metadata-field">
-              {FIELD_ICONS[key] && <span className="metadata-icon">{FIELD_ICONS[key]}</span>}
-              <span className="metadata-key">{key}:</span>
-              {renderValue(key, value)}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="metadata-fields">
+        {isDraft && (
+          <span className="metadata-field metadata-draft">
+            <span className="metadata-chip is-draft">Draft</span>
+          </span>
+        )}
+        {fields.filter(([key]) => key !== 'draft').map(([key, value]) => (
+          <span key={key} className="metadata-field">
+            {FIELD_ICONS[key] && <span className="metadata-icon">{FIELD_ICONS[key]}</span>}
+            <span className="metadata-key">{key}:</span>
+            {renderValue(key, value)}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }

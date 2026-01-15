@@ -74,11 +74,7 @@ function PageWrapper({ Component, meta }: { Component: React.ComponentType; meta
   return (
     <>
       {meta.frontmatter && Object.keys(meta.frontmatter).length > 0 && (
-        <MetadataBlock
-          frontmatter={meta.frontmatter}
-          title={meta.title}
-          description={meta.description}
-        />
+        <MetadataBlock frontmatter={meta.frontmatter} />
       )}
       <Component />
     </>

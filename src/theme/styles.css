@@ -597,25 +597,7 @@ body {
    =========================================== */
 
 .metadata-block {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--fd-border);
-}
-
-.metadata-title {
-  font-size: 2.25rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  color: var(--fd-foreground);
-}
-
-.metadata-description {
-  font-size: 1.125rem;
-  color: var(--fd-muted-foreground);
-  margin: 0 0 1rem 0;
-  line-height: 1.5;
+  margin-bottom: 1.5rem;
 }
 
 .metadata-fields {
