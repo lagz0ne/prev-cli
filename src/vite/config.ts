@@ -11,6 +11,8 @@ import { existsSync, readFileSync } from 'fs'
 import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
+import { previewsPlugin } from './plugins/previews-plugin'
+import { scanPreviews } from './previews'
 // fumadocsPlugin removed - using custom lightweight layout
 
 // Create a friendly logger that filters out technical noise
@@ -142,6 +144,12 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
   const { rootDir, mode, port, include } = options
   const cacheDir = await ensureCacheDir(rootDir)
 
+  // Scan previews for multi-entry build
+  const previews = await scanPreviews(rootDir)
+  const previewInputs = Object.fromEntries(
+    previews.map(p => [`_preview/${p.name}`, p.htmlPath])
+  )
+
   return {
     root: rootDir,
     mode,
@@ -157,7 +165,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       }),
       react(),
       pagesPlugin(rootDir, { include }),
-      entryPlugin(rootDir)
+      entryPlugin(rootDir),
+      previewsPlugin(rootDir)
     ],
 
     resolve: {
@@ -227,7 +236,13 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       outDir: path.join(rootDir, 'dist'),
       // Suppress verbose build output for non-technical users
       reportCompressedSize: false,
-      chunkSizeWarningLimit: 10000  // 10MB - hide chunk warnings
+      chunkSizeWarningLimit: 10000,  // 10MB - hide chunk warnings
+      rollupOptions: {
+        input: {
+          main: path.join(srcRoot, 'theme/index.html'),
+          ...previewInputs
+        }
+      }
     }
   }
 }
