@@ -69,10 +69,21 @@ export function entryPlugin(rootDir?: string): Plugin {
         tempHtmlPath = path.join(rootDir, 'index.html')
         writeFileSync(tempHtmlPath, getHtml(entryPath, true))
 
+        // Preserve existing inputs (e.g., preview entries from config.ts) and add our main entry
+        const existingInput = config.build?.rollupOptions?.input || {}
+        const inputObj = typeof existingInput === 'string'
+          ? { _original: existingInput }
+          : Array.isArray(existingInput)
+          ? Object.fromEntries(existingInput.map((f, i) => [`entry${i}`, f]))
+          : existingInput
+
         return {
           build: {
             rollupOptions: {
-              input: tempHtmlPath
+              input: {
+                ...inputObj,
+                main: tempHtmlPath  // Our main entry
+              }
             }
           }
         }
