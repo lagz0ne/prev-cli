@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Maximize2, Minimize2, ExternalLink } from 'lucide-react'
 
 interface PreviewProps {
@@ -12,6 +12,26 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
   const previewUrl = `/_preview/${src}`
   const displayTitle = title || src
 
+  useEffect(() => {
+    if (!isFullscreen) return
+
+    // Lock body scroll
+    document.body.style.overflow = 'hidden'
+
+    // Handle escape key
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullscreen(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.body.style.overflow = ''
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isFullscreen])
+
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 z-50 bg-white dark:bg-zinc-900">
@@ -24,6 +44,7 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
               rel="noopener noreferrer"
               className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded"
               title="Open in new tab"
+              aria-label="Open in new tab"
             >
               <ExternalLink className="w-4 h-4" />
             </a>
@@ -31,6 +52,7 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
               onClick={() => setIsFullscreen(false)}
               className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded"
               title="Exit fullscreen"
+              aria-label="Exit fullscreen"
             >
               <Minimize2 className="w-4 h-4" />
             </button>
@@ -58,6 +80,7 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
             rel="noopener noreferrer"
             className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"
             title="Open in new tab"
+            aria-label="Open in new tab"
           >
             <ExternalLink className="w-4 h-4 text-zinc-500" />
           </a>
@@ -65,6 +88,7 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
             onClick={() => setIsFullscreen(true)}
             className="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded"
             title="Fullscreen"
+            aria-label="Enter fullscreen"
           >
             <Maximize2 className="w-4 h-4 text-zinc-500" />
           </button>
