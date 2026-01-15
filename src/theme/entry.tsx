@@ -7,10 +7,12 @@ import {
   createRoute,
   Outlet,
 } from '@tanstack/react-router'
+import { MDXProvider } from '@mdx-js/react'
 import { pages, sidebar } from 'virtual:prev-pages'
 import { useDiagrams } from './diagrams'
 import { Layout } from './Layout'
 import { MetadataBlock } from './MetadataBlock'
+import { mdxComponents } from './mdx-components'
 import './styles.css'
 
 // PageTree types (simplified from fumadocs-core)
@@ -72,12 +74,12 @@ interface PageMeta {
 function PageWrapper({ Component, meta }: { Component: React.ComponentType; meta: PageMeta }) {
   useDiagrams()
   return (
-    <>
+    <MDXProvider components={mdxComponents}>
       {meta.frontmatter && Object.keys(meta.frontmatter).length > 0 && (
         <MetadataBlock frontmatter={meta.frontmatter} />
       )}
       <Component />
-    </>
+    </MDXProvider>
   )
 }
 

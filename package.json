@@ -40,6 +40,7 @@
     "test:all": "bun run test && bun run test:integration"
   },
   "dependencies": {
+    "@mdx-js/react": "^3.1.1",
     "@mdx-js/rollup": "^3.0.0",
     "@tailwindcss/vite": "^4.0.0",
     "@tanstack/react-router": "^1.145.7",
