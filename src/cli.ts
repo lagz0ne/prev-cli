@@ -10,6 +10,7 @@ const { values, positionals } = parseArgs({
     port: { type: 'string', short: 'p' },
     days: { type: 'string', short: 'd' },
     cwd: { type: 'string', short: 'c' },
+    include: { type: 'string', short: 'i', multiple: true },
     help: { type: 'boolean', short: 'h' }
   },
   allowPositionals: true
@@ -34,17 +35,19 @@ Commands:
   clean     Remove old cache directories
 
 Options:
-  -c, --cwd <path>    Set working directory
-  -p, --port <port>   Specify port (dev/preview)
-  -d, --days <days>   Cache age threshold for clean (default: 30)
-  -h, --help          Show this help message
+  -c, --cwd <path>       Set working directory
+  -p, --port <port>      Specify port (dev/preview)
+  -i, --include <dir>    Include dot-prefixed directory (can use multiple times)
+  -d, --days <days>      Cache age threshold for clean (default: 30)
+  -h, --help             Show this help message
 
 Examples:
-  prev                Start dev server on random port
-  prev dev -p 3000    Start dev server on port 3000
-  prev build          Build static site to ./dist
-  prev clean          Remove caches older than 30 days
-  prev clean -d 7     Remove caches older than 7 days
+  prev                       Start dev server on random port
+  prev dev -p 3000           Start dev server on port 3000
+  prev build                 Build static site to ./dist
+  prev dev -i .c3            Include .c3 directory in docs
+  prev dev -i .c3 -i .notes  Include multiple dot directories
+  prev clean -d 7            Remove caches older than 7 days
 `)
 }
 
@@ -56,19 +59,20 @@ async function main() {
 
   const port = values.port ? parseInt(values.port, 10) : undefined
   const days = values.days ? parseInt(values.days, 10) : 30
+  const include = values.include || []
 
   try {
     switch (command) {
       case 'dev':
-        await startDev(rootDir, { port })
+        await startDev(rootDir, { port, include })
         break
 
       case 'build':
-        await buildSite(rootDir)
+        await buildSite(rootDir, { include })
         break
 
       case 'preview':
-        await previewSite(rootDir, { port })
+        await previewSite(rootDir, { port, include })
         break
 
       case 'clean':

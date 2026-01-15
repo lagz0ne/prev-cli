@@ -5,7 +5,13 @@ import { scanPages, buildSidebarTree } from '../pages'
 const VIRTUAL_MODULE_ID = 'virtual:prev-pages'
 const RESOLVED_VIRTUAL_MODULE_ID = '\0' + VIRTUAL_MODULE_ID
 
-export function pagesPlugin(rootDir: string): Plugin {
+export interface PagesPluginOptions {
+  include?: string[]
+}
+
+export function pagesPlugin(rootDir: string, options: PagesPluginOptions = {}): Plugin {
+  const { include } = options
+
   return {
     name: 'prev-pages',
 
@@ -17,7 +23,7 @@ export function pagesPlugin(rootDir: string): Plugin {
 
     async load(id) {
       if (id === RESOLVED_VIRTUAL_MODULE_ID) {
-        const pages = await scanPages(rootDir)
+        const pages = await scanPages(rootDir, { include })
         const sidebar = buildSidebarTree(pages)
 
         return `

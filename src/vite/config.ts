@@ -135,10 +135,11 @@ export interface ConfigOptions {
   rootDir: string
   mode: 'development' | 'production'
   port?: number
+  include?: string[]
 }
 
 export async function createViteConfig(options: ConfigOptions): Promise<InlineConfig> {
-  const { rootDir, mode, port } = options
+  const { rootDir, mode, port, include } = options
   const cacheDir = await ensureCacheDir(rootDir)
 
   return {
@@ -155,7 +156,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         rehypePlugins: [rehypeHighlight]
       }),
       react(),
-      pagesPlugin(rootDir),
+      pagesPlugin(rootDir, { include }),
       entryPlugin(rootDir)
     ],
 

@@ -5,6 +5,11 @@ import { getRandomPort } from '../utils/port'
 
 export interface DevOptions {
   port?: number
+  include?: string[]
+}
+
+export interface BuildOptions {
+  include?: string[]
 }
 
 function printWelcome(type: 'dev' | 'preview') {
@@ -31,7 +36,8 @@ export async function startDev(rootDir: string, options: DevOptions = {}) {
   const config = await createViteConfig({
     rootDir,
     mode: 'development',
-    port
+    port,
+    include: options.include
   })
 
   const server = await createServer(config)
@@ -44,7 +50,7 @@ export async function startDev(rootDir: string, options: DevOptions = {}) {
   return server
 }
 
-export async function buildSite(rootDir: string) {
+export async function buildSite(rootDir: string, options: BuildOptions = {}) {
   console.log()
   console.log('  ✨ prev build')
   console.log()
@@ -52,7 +58,8 @@ export async function buildSite(rootDir: string) {
 
   const config = await createViteConfig({
     rootDir,
-    mode: 'production'
+    mode: 'production',
+    include: options.include
   })
 
   await build(config)
@@ -69,7 +76,8 @@ export async function previewSite(rootDir: string, options: DevOptions = {}) {
   const config = await createViteConfig({
     rootDir,
     mode: 'production',
-    port
+    port,
+    include: options.include
   })
 
   const server = await preview(config)

@@ -114,17 +114,50 @@ export function fileToRoute(file: string): string {
   return '/' + withoutExt
 }
 
-export async function scanPages(rootDir: string): Promise<Page[]> {
-  const files = await fg.glob('**/*.{md,mdx}', {
+export interface ScanOptions {
+  include?: string[]
+}
+
+export async function scanPages(rootDir: string, options: ScanOptions = {}): Promise<Page[]> {
+  const { include = [] } = options
+
+  // Normalize include paths to have leading dot
+  const includeDirs = include.map(dir => dir.startsWith('.') ? dir : `.${dir}`)
+
+  // Build glob patterns
+  const patterns = ['**/*.{md,mdx}']
+
+  // Add explicit patterns for included dot directories
+  for (const dir of includeDirs) {
+    patterns.push(`${dir}/**/*.{md,mdx}`)
+  }
+
+  // Build ignore patterns - always ignore these, plus dot dirs not in include list
+  const ignore = ['node_modules/**', 'dist/**', '.cache/**']
+
+  const files = await fg.glob(patterns, {
     cwd: rootDir,
-    ignore: ['node_modules/**', 'dist/**', '.cache/**', '.*/**'],
-    dot: false
+    ignore,
+    dot: true  // Enable dot to allow our explicit dot patterns
+  })
+
+  // Filter out unwanted dot directories (not in include list)
+  const filteredFiles = files.filter(file => {
+    // Check if file is in a dot directory
+    const parts = file.split('/')
+    for (const part of parts) {
+      if (part.startsWith('.') && part !== '.') {
+        // This is a dot directory - only allow if in include list
+        return includeDirs.some(dir => file.startsWith(dir.slice(1)) || file.startsWith(dir))
+      }
+    }
+    return true
   })
 
   // Group files by route to handle index/README conflicts
   const routeMap = new Map<string, { file: string; priority: number }>()
 
-  for (const file of files) {
+  for (const file of filteredFiles) {
     const route = fileToRoute(file)
     const basename = path.basename(file, path.extname(file)).toLowerCase()
 
