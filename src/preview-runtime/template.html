@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <!-- Tailwind CSS v4 Play CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- esbuild-wasm -->
+  <script src="https://unpkg.com/esbuild-wasm@0.24.2/lib/browser.min.js"></script>
+  <style>
+    body { margin: 0; }
+    #root { min-height: 100vh; }
+    .preview-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      color: #666;
+    }
+    .preview-error {
+      padding: 1rem;
+      background: #fef2f2;
+      color: #dc2626;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"><div class="preview-loading">Loading preview...</div></div>
+
+  <script type="module">
+    // Preview runtime - bundles React/TSX in browser via esbuild-wasm
+
+    let initialized = false
+    let lastConfig = null
+
+    function getLoader(filePath) {
+      const ext = filePath.split('.').pop()?.toLowerCase()
+      const loaders = { tsx: 'tsx', ts: 'ts', jsx: 'jsx', js: 'js', css: 'css', json: 'json' }
+      return loaders[ext] || 'tsx'
+    }
+
+    async function initEsbuild() {
+      if (initialized) return
+      await esbuild.initialize({
+        wasmURL: 'https://unpkg.com/esbuild-wasm@0.24.2/esbuild.wasm',
+      })
+      initialized = true
+    }
+
+    async function bundle(config) {
+      const startTime = performance.now()
+
+      try {
+        await initEsbuild()
+
+        // Build virtual filesystem
+        const virtualFs = {}
+        for (const file of config.files) {
+          virtualFs[file.path] = {
+            contents: file.content,
+            loader: getLoader(file.path),
+          }
+        }
+
+        // Find entry and create wrapper
+        const entryFile = config.files.find(f => f.path === config.entry)
+        if (!entryFile) {
+          return { success: false, error: `Entry file not found: ${config.entry}` }
+        }
+
+        // Determine if entry exports default or needs wrapping
+        const hasDefaultExport = /export\s+default/.test(entryFile.content)
+
+        const entryCode = hasDefaultExport ? `
+          import React from 'react'
+          import { createRoot } from 'react-dom/client'
+          import App from './${config.entry}'
+
+          const root = createRoot(document.getElementById('root'))
+          root.render(React.createElement(App))
+        ` : `
+          // Entry file doesn't export default, execute directly
+          import './${config.entry}'
+        `
+
+        const result = await esbuild.build({
+          stdin: {
+            contents: entryCode,
+            loader: 'tsx',
+            resolveDir: '/',
+          },
+          bundle: true,
+          write: false,
+          format: 'esm',
+          jsx: 'automatic',
+          jsxImportSource: 'react',
+          target: 'es2020',
+          plugins: [{
+            name: 'virtual-fs',
+            setup(build) {
+              // External: React from CDN
+              build.onResolve({ filter: /^react(-dom)?(\/.*)?$/ }, args => {
+                const parts = args.path.split('/')
+                const pkg = parts[0]
+                const subpath = parts.slice(1).join('/')
+                const url = subpath
+                  ? `https://esm.sh/${pkg}@18/${subpath}`
+                  : `https://esm.sh/${pkg}@18`
+                return { path: url, external: true }
+              })
+
+              // Auto-resolve npm packages via esm.sh
+              build.onResolve({ filter: /^[^./]/ }, args => {
+                if (args.path.startsWith('https://')) return
+                return { path: `https://esm.sh/${args.path}`, external: true }
+              })
+
+              // Resolve relative imports
+              build.onResolve({ filter: /^\./ }, args => {
+                let resolved = args.path.replace(/^\.\//, '')
+                if (!resolved.includes('.')) {
+                  for (const ext of ['.tsx', '.ts', '.jsx', '.js', '.css']) {
+                    if (virtualFs[resolved + ext]) {
+                      resolved = resolved + ext
+                      break
+                    }
+                  }
+                }
+                return { path: resolved, namespace: 'virtual' }
+              })
+
+              // Load from virtual filesystem
+              build.onLoad({ filter: /.*/, namespace: 'virtual' }, args => {
+                const file = virtualFs[args.path]
+                if (file) {
+                  if (file.loader === 'css') {
+                    const css = file.contents.replace(/`/g, '\\`').replace(/\$/g, '\\$')
+                    return {
+                      contents: `
+                        const style = document.createElement('style');
+                        style.textContent = \`${css}\`;
+                        document.head.appendChild(style);
+                      `,
+                      loader: 'js',
+                    }
+                  }
+                  return { contents: file.contents, loader: file.loader }
+                }
+                console.warn('[preview] File not found:', args.path)
+                return { contents: '', loader: 'empty' }
+              })
+            },
+          }],
+        })
+
+        const jsFile = result.outputFiles.find(f => f.path.endsWith('.js')) || result.outputFiles[0]
+        return {
+          success: true,
+          code: jsFile?.text || '',
+          buildTime: Math.round(performance.now() - startTime),
+        }
+      } catch (err) {
+        return {
+          success: false,
+          error: err.message || String(err),
+          buildTime: Math.round(performance.now() - startTime),
+        }
+      }
+    }
+
+    function renderCode(code) {
+      const root = document.getElementById('root')
+      root.innerHTML = ''
+
+      const script = document.createElement('script')
+      script.type = 'module'
+      script.textContent = code
+      document.body.appendChild(script)
+    }
+
+    function showError(error) {
+      const root = document.getElementById('root')
+      root.innerHTML = `<div class="preview-error">${error}</div>`
+    }
+
+    // Listen for config from parent
+    window.addEventListener('message', async (event) => {
+      const msg = event.data
+
+      if (msg.type === 'init' || msg.type === 'update') {
+        const config = msg.type === 'init' ? msg.config : { ...lastConfig, files: msg.files }
+        lastConfig = config
+
+        const result = await bundle(config)
+
+        if (result.success && result.code) {
+          renderCode(result.code)
+          parent.postMessage({ type: 'built', result }, '*')
+        } else {
+          showError(result.error)
+          parent.postMessage({ type: 'error', error: result.error }, '*')
+        }
+      }
+    })
+
+    // Signal ready to parent
+    parent.postMessage({ type: 'ready' }, '*')
+  </script>
+</body>
+</html>

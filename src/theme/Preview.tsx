@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Smartphone, Tablet, Monitor, SunMedium, Moon, Maximize2, Minimize2, GripVertical, SlidersHorizontal, X } from 'lucide-react'
+import { Smartphone, Tablet, Monitor, SunMedium, Moon, Maximize2, Minimize2, GripVertical, SlidersHorizontal, X, Loader2 } from 'lucide-react'
+import type { PreviewConfig, PreviewMessage, BuildResult } from '../preview-runtime/types'
 
 interface PreviewProps {
   src: string
   height?: string | number
   title?: string
+  mode?: 'wasm' | 'legacy' // 'wasm' uses browser bundling, 'legacy' uses Vite
 }
 
 type DeviceMode = 'mobile' | 'tablet' | 'desktop'
@@ -20,7 +22,7 @@ interface Position {
   y: number
 }
 
-export function Preview({ src, height = 400, title }: PreviewProps) {
+export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [deviceMode, setDeviceMode] = useState<DeviceMode>('desktop')
   const [customWidth, setCustomWidth] = useState<number | null>(null)
@@ -30,11 +32,17 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 })
 
+  // WASM preview state
+  const [buildStatus, setBuildStatus] = useState<'loading' | 'building' | 'ready' | 'error'>('loading')
+  const [buildTime, setBuildTime] = useState<number | null>(null)
+  const [buildError, setBuildError] = useState<string | null>(null)
+
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const pillRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  const previewUrl = `/_preview/${src}`
+  // URL depends on mode
+  const previewUrl = mode === 'wasm' ? '/_preview-runtime' : `/_preview/${src}`
   const displayTitle = title || src
 
   // Calculate current width
@@ -87,6 +95,60 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
       iframe.removeEventListener('load', applyDarkMode)
     }
   }, [isDarkMode])
+
+  // WASM preview: Initialize and send config to iframe
+  useEffect(() => {
+    if (mode !== 'wasm') return
+
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    let configSent = false
+
+    // Handle messages from iframe
+    const handleMessage = (event: MessageEvent) => {
+      const msg = event.data as PreviewMessage
+
+      if (msg.type === 'ready' && !configSent) {
+        // Iframe is ready, fetch and send config
+        configSent = true
+        setBuildStatus('building')
+
+        fetch(`/_preview-config/${src}`)
+          .then(res => res.json())
+          .then((config: PreviewConfig) => {
+            iframe.contentWindow?.postMessage({ type: 'init', config } as PreviewMessage, '*')
+          })
+          .catch(err => {
+            setBuildStatus('error')
+            setBuildError(`Failed to load preview config: ${err.message}`)
+          })
+      }
+
+      if (msg.type === 'built') {
+        const result = msg.result as BuildResult
+        if (result.success) {
+          setBuildStatus('ready')
+          setBuildTime(result.buildTime || null)
+          setBuildError(null)
+        } else {
+          setBuildStatus('error')
+          setBuildError(result.error || 'Build failed')
+        }
+      }
+
+      if (msg.type === 'error') {
+        setBuildStatus('error')
+        setBuildError(msg.error)
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [mode, src])
 
   // Drag handlers
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -344,13 +406,35 @@ export function Preview({ src, height = 400, title }: PreviewProps) {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-          {displayTitle}
-        </span>
-        <span className="text-xs text-zinc-400">
-          {currentWidth ? `${currentWidth}px` : '100%'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+            {displayTitle}
+          </span>
+          {mode === 'wasm' && buildStatus === 'building' && (
+            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+          )}
+          {mode === 'wasm' && buildStatus === 'error' && (
+            <span className="text-xs text-red-500">Error</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {mode === 'wasm' && buildTime && (
+            <span className="text-xs text-zinc-400">{buildTime}ms</span>
+          )}
+          <span className="text-xs text-zinc-400">
+            {currentWidth ? `${currentWidth}px` : '100%'}
+          </span>
+        </div>
       </div>
+
+      {/* Build error display */}
+      {mode === 'wasm' && buildError && (
+        <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
+          <pre className="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap font-mono overflow-auto max-h-32">
+            {buildError}
+          </pre>
+        </div>
+      )}
 
       {/* Preview area with checkered background */}
       <div

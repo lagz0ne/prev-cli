@@ -105,8 +105,8 @@ export function entryPlugin(rootDir?: string): Plugin {
         const url = req.url || '/'
 
         // Serve HTML for all non-file requests (SPA routing)
-        // Exclude /_preview/ routes - handled by preview-server plugin
-        if (url === '/' || (!url.includes('.') && !url.startsWith('/@') && !url.startsWith('/_preview/'))) {
+        // Exclude /_preview* routes - handled by preview-server plugin
+        if (url === '/' || (!url.includes('.') && !url.startsWith('/@') && !url.startsWith('/_preview'))) {
           try {
             const transformed = await server.transformIndexHtml(url, html)
             res.setHeader('Content-Type', 'text/html')

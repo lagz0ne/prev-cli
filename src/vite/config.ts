@@ -12,7 +12,7 @@ import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
 import { previewsPlugin } from './plugins/previews-plugin'
-import { scanPreviews } from './previews'
+import { buildPreviewConfig } from './previews'
 // fumadocsPlugin removed - using custom lightweight layout
 
 // Create a friendly logger that filters out technical noise
@@ -144,11 +144,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
   const { rootDir, mode, port, include } = options
   const cacheDir = await ensureCacheDir(rootDir)
 
-  // Scan previews for multi-entry build
-  const previews = await scanPreviews(rootDir)
-  const previewInputs = Object.fromEntries(
-    previews.map(p => [`_preview/${p.name}`, p.htmlPath])
-  )
+  // Note: Previews are now built separately by the previews plugin
+  // using esbuild for standalone HTML output
 
   return {
     root: rootDir,
@@ -167,7 +164,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       pagesPlugin(rootDir, { include }),
       entryPlugin(rootDir),
       previewsPlugin(rootDir),
-      // Custom plugin for serving preview routes in dev server
+      // Custom plugin for serving WASM-based preview routes
       {
         name: 'prev-preview-server',
 
@@ -186,11 +183,50 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         },
 
         configureServer(server) {
-          // Serve preview HTML files
           server.middlewares.use(async (req, res, next) => {
-            if (req.url?.startsWith('/_preview/')) {
-              // Check if this is an index.html request (no extension or ends with /)
-              const urlPath = req.url.split('?')[0]
+            const urlPath = req.url?.split('?')[0] || ''
+
+            // Serve WASM preview runtime template
+            if (urlPath === '/_preview-runtime') {
+              const templatePath = path.join(srcRoot, 'preview-runtime/template.html')
+              if (existsSync(templatePath)) {
+                const html = readFileSync(templatePath, 'utf-8')
+                res.setHeader('Content-Type', 'text/html')
+                res.end(html)
+                return
+              }
+            }
+
+            // Serve preview config as JSON for WASM runtime
+            if (urlPath.startsWith('/_preview-config/')) {
+              const previewName = decodeURIComponent(urlPath.slice('/_preview-config/'.length))
+              const previewsDir = path.join(rootDir, 'previews')
+              const previewDir = path.resolve(previewsDir, previewName)
+
+              // Security: prevent path traversal
+              if (!previewDir.startsWith(previewsDir)) {
+                res.statusCode = 403
+                res.end('Forbidden')
+                return
+              }
+
+              if (existsSync(previewDir)) {
+                try {
+                  const config = await buildPreviewConfig(previewDir)
+                  res.setHeader('Content-Type', 'application/json')
+                  res.end(JSON.stringify(config))
+                  return
+                } catch (err) {
+                  console.error('Error building preview config:', err)
+                  res.statusCode = 500
+                  res.end(JSON.stringify({ error: String(err) }))
+                  return
+                }
+              }
+            }
+
+            // Legacy: Serve preview HTML files directly (fallback)
+            if (urlPath.startsWith('/_preview/')) {
               const isHtmlRequest = !path.extname(urlPath) || urlPath.endsWith('/')
 
               if (isHtmlRequest) {
@@ -205,17 +241,13 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
 
                 if (existsSync(htmlPath)) {
                   try {
-                    // Read HTML and rewrite relative paths to absolute preview paths
                     let html = readFileSync(htmlPath, 'utf-8')
-
-                    // Rewrite relative src/href to absolute /_preview/{name}/ paths
                     const previewBase = `/_preview/${previewName}/`
                     html = html.replace(
                       /(src|href)=["']\.\/([^"']+)["']/g,
                       `$1="${previewBase}$2"`
                     )
-
-                    const transformed = await server.transformIndexHtml(req.url, html)
+                    const transformed = await server.transformIndexHtml(req.url!, html)
                     res.setHeader('Content-Type', 'text/html')
                     res.end(transformed)
                     return
@@ -226,6 +258,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
                 }
               }
             }
+
             next()
           })
         }
@@ -303,7 +336,6 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       rollupOptions: {
         input: {
           main: path.join(srcRoot, 'theme/index.html'),
-          ...previewInputs
         }
       }
     }
