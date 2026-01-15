@@ -166,7 +166,30 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       react(),
       pagesPlugin(rootDir, { include }),
       entryPlugin(rootDir),
-      previewsPlugin(rootDir)
+      previewsPlugin(rootDir),
+      // Custom plugin for serving preview routes in dev server
+      {
+        name: 'prev-preview-server',
+        configureServer(server) {
+          server.middlewares.use(async (req, res, next) => {
+            if (req.url?.startsWith('/_preview/')) {
+              const previewName = req.url.slice('/_preview/'.length).split('?')[0]
+              const htmlPath = path.join(rootDir, 'previews', previewName, 'index.html')
+
+              if (existsSync(htmlPath)) {
+                const html = await server.transformIndexHtml(
+                  req.url,
+                  readFileSync(htmlPath, 'utf-8')
+                )
+                res.setHeader('Content-Type', 'text/html')
+                res.end(html)
+                return
+              }
+            }
+            next()
+          })
+        }
+      }
     ],
 
     resolve: {
