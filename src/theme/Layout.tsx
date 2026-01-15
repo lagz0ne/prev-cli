@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
 
@@ -14,8 +14,19 @@ function getItemId(item: TreeItem): string {
   return item.type === 'folder' ? `folder:${item.name}` : item.url
 }
 
-// Apply saved order to items
-function applyOrder(items: TreeItem[], order: string[]): TreeItem[] {
+// Storage key for a specific path (root or folder)
+function getStorageKey(path: string): string {
+  return `sidebar-order:${path}`
+}
+
+// Apply saved order to items for a specific path
+function applyOrder(items: TreeItem[], path: string): TreeItem[] {
+  if (typeof window === 'undefined') return items
+
+  const saved = localStorage.getItem(getStorageKey(path))
+  if (!saved) return items
+
+  const order: string[] = JSON.parse(saved)
   if (order.length === 0) return items
 
   const itemMap = new Map(items.map(item => [getItemId(item), item]))
@@ -37,6 +48,25 @@ function applyOrder(items: TreeItem[], order: string[]): TreeItem[] {
 
   return ordered
 }
+
+// Save order for a specific path
+function saveOrder(items: TreeItem[], path: string): void {
+  const order = items.map(getItemId)
+  localStorage.setItem(getStorageKey(path), JSON.stringify(order))
+}
+
+// Drag context for nested components
+interface DragContextType {
+  dragPath: string | null
+  dragIndex: number | null
+  dragOverPath: string | null
+  dragOverIndex: number | null
+  onDragStart: (path: string, index: number) => void
+  onDragOver: (path: string, index: number) => void
+  onDragEnd: () => void
+}
+
+const DragContext = createContext<DragContextType | null>(null)
 
 function SidebarToggle({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
@@ -75,48 +105,45 @@ function CollapsedFolderIcon({ item, onClick }: { item: PageTree.Folder; onClick
 interface DraggableSidebarItemProps {
   item: TreeItem
   index: number
+  path: string
   depth?: number
-  onDragStart: (index: number) => void
-  onDragOver: (index: number) => void
-  onDragEnd: () => void
-  isDragging: boolean
-  dragOverIndex: number | null
 }
 
-function DraggableSidebarItem({
-  item,
-  index,
-  depth = 0,
-  onDragStart,
-  onDragOver,
-  onDragEnd,
-  isDragging,
-  dragOverIndex
-}: DraggableSidebarItemProps) {
+function DraggableSidebarItem({ item, index, path, depth = 0 }: DraggableSidebarItemProps) {
   const location = useLocation()
   const [isOpen, setIsOpen] = useState(true)
+  const dragCtx = useContext(DragContext)
 
   const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation()
     e.dataTransfer.effectAllowed = 'move'
-    onDragStart(index)
+    dragCtx?.onDragStart(path, index)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     e.dataTransfer.dropEffect = 'move'
-    onDragOver(index)
+    dragCtx?.onDragOver(path, index)
   }
 
-  const isDropTarget = dragOverIndex === index
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.stopPropagation()
+    dragCtx?.onDragEnd()
+  }
+
+  const isDropTarget = dragCtx?.dragOverPath === path && dragCtx?.dragOverIndex === index
 
   if (item.type === 'folder') {
+    const folderPath = `${path}/${item.name}`
+
     return (
       <div
         className={`sidebar-folder ${isDropTarget ? 'drop-target' : ''}`}
         draggable
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
-        onDragEnd={onDragEnd}
+        onDragEnd={handleDragEnd}
       >
         <button
           className="sidebar-folder-toggle"
@@ -132,11 +159,11 @@ function DraggableSidebarItem({
           {item.name}
         </button>
         {isOpen && (
-          <div className="sidebar-folder-children">
-            {item.children.map((child, i) => (
-              <SidebarItem key={i} item={child} depth={depth + 1} />
-            ))}
-          </div>
+          <DraggableFolderChildren
+            items={item.children}
+            path={folderPath}
+            depth={depth + 1}
+          />
         )}
       </div>
     )
@@ -151,7 +178,7 @@ function DraggableSidebarItem({
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
-      onDragEnd={onDragEnd}
+      onDragEnd={handleDragEnd}
     >
       <Link
         to={item.url}
@@ -165,48 +192,62 @@ function DraggableSidebarItem({
   )
 }
 
-// Non-draggable version for nested items
-function SidebarItem({ item, depth = 0 }: { item: TreeItem; depth?: number }) {
-  const location = useLocation()
-  const [isOpen, setIsOpen] = useState(true)
+// Draggable folder children with their own order state
+function DraggableFolderChildren({ items, path, depth }: { items: TreeItem[]; path: string; depth: number }) {
+  const [orderedItems, setOrderedItems] = useState<TreeItem[]>(() => applyOrder(items, path))
+  const dragCtx = useContext(DragContext)
 
-  if (item.type === 'folder') {
-    return (
-      <div className="sidebar-folder">
-        <button
-          className="sidebar-folder-toggle"
-          onClick={() => setIsOpen(!isOpen)}
-          style={{ paddingLeft: `${depth * 12 + 8}px` }}
-        >
-          <span className={`folder-icon ${isOpen ? 'open' : ''}`}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M4.5 2L8.5 6L4.5 10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-            </svg>
-          </span>
-          {item.name}
-        </button>
-        {isOpen && (
-          <div className="sidebar-folder-children">
-            {item.children.map((child, i) => (
-              <SidebarItem key={i} item={child} depth={depth + 1} />
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
+  // Update when items change
+  useEffect(() => {
+    setOrderedItems(applyOrder(items, path))
+  }, [items, path])
 
-  const isActive = location.pathname === item.url ||
-    (item.url === '/' && location.pathname === '/')
+  // Handle reorder when drag ends in this folder
+  useEffect(() => {
+    if (
+      dragCtx?.dragPath === path &&
+      dragCtx?.dragOverPath === path &&
+      dragCtx?.dragIndex !== null &&
+      dragCtx?.dragOverIndex !== null &&
+      dragCtx?.dragIndex !== dragCtx?.dragOverIndex
+    ) {
+      // Will be handled by parent's onDragEnd
+    }
+  }, [dragCtx, path])
+
+  // Listen for successful drops in this path
+  const prevDragCtx = useRef(dragCtx)
+  useEffect(() => {
+    const prev = prevDragCtx.current
+    if (
+      prev?.dragPath === path &&
+      prev?.dragOverPath === path &&
+      prev?.dragIndex !== null &&
+      prev?.dragOverIndex !== null &&
+      prev?.dragIndex !== prev?.dragOverIndex &&
+      dragCtx?.dragPath === null // drag ended
+    ) {
+      const newItems = [...orderedItems]
+      const [removed] = newItems.splice(prev.dragIndex, 1)
+      newItems.splice(prev.dragOverIndex, 0, removed)
+      setOrderedItems(newItems)
+      saveOrder(newItems, path)
+    }
+    prevDragCtx.current = dragCtx
+  }, [dragCtx, path, orderedItems])
 
   return (
-    <Link
-      to={item.url}
-      className={`sidebar-link ${isActive ? 'active' : ''}`}
-      style={{ paddingLeft: `${depth * 12 + 16}px` }}
-    >
-      {item.name}
-    </Link>
+    <div className="sidebar-folder-children">
+      {orderedItems.map((child, i) => (
+        <DraggableSidebarItem
+          key={getItemId(child)}
+          item={child}
+          index={i}
+          path={path}
+          depth={depth}
+        />
+      ))}
+    </div>
   )
 }
 
@@ -274,6 +315,8 @@ function WidthToggle() {
   )
 }
 
+const ROOT_PATH = 'root'
+
 export function Layout({ tree, children }: LayoutProps) {
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -282,16 +325,11 @@ export function Layout({ tree, children }: LayoutProps) {
     return false
   })
 
-  const [orderedItems, setOrderedItems] = useState<TreeItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('sidebar-order')
-      const order = saved ? JSON.parse(saved) : []
-      return applyOrder(tree.children, order)
-    }
-    return tree.children
-  })
+  const [orderedItems, setOrderedItems] = useState<TreeItem[]>(() => applyOrder(tree.children, ROOT_PATH))
 
+  const [dragPath, setDragPath] = useState<string | null>(null)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverPath, setDragOverPath] = useState<string | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   // Initialize theme from localStorage
@@ -304,9 +342,7 @@ export function Layout({ tree, children }: LayoutProps) {
 
   // Update ordered items when tree changes
   useEffect(() => {
-    const saved = localStorage.getItem('sidebar-order')
-    const order = saved ? JSON.parse(saved) : []
-    setOrderedItems(applyOrder(tree.children, order))
+    setOrderedItems(applyOrder(tree.children, ROOT_PATH))
   }, [tree.children])
 
   // Persist collapsed state
@@ -316,28 +352,38 @@ export function Layout({ tree, children }: LayoutProps) {
 
   const toggleCollapsed = () => setCollapsed(!collapsed)
 
-  const handleDragStart = (index: number) => {
+  const handleDragStart = (path: string, index: number) => {
+    setDragPath(path)
     setDragIndex(index)
   }
 
-  const handleDragOver = (index: number) => {
-    if (dragIndex !== null && dragIndex !== index) {
+  const handleDragOver = (path: string, index: number) => {
+    // Only allow dropping in the same path (no cross-folder drops)
+    if (dragPath === path && dragIndex !== index) {
+      setDragOverPath(path)
       setDragOverIndex(index)
     }
   }
 
   const handleDragEnd = () => {
-    if (dragIndex !== null && dragOverIndex !== null && dragIndex !== dragOverIndex) {
+    // Handle root-level reordering
+    if (
+      dragPath === ROOT_PATH &&
+      dragOverPath === ROOT_PATH &&
+      dragIndex !== null &&
+      dragOverIndex !== null &&
+      dragIndex !== dragOverIndex
+    ) {
       const newItems = [...orderedItems]
       const [removed] = newItems.splice(dragIndex, 1)
       newItems.splice(dragOverIndex, 0, removed)
       setOrderedItems(newItems)
-
-      // Save order to localStorage
-      const order = newItems.map(getItemId)
-      localStorage.setItem('sidebar-order', JSON.stringify(order))
+      saveOrder(newItems, ROOT_PATH)
     }
+
+    setDragPath(null)
     setDragIndex(null)
+    setDragOverPath(null)
     setDragOverIndex(null)
   }
 
@@ -346,48 +392,56 @@ export function Layout({ tree, children }: LayoutProps) {
     (item): item is PageTree.Folder => item.type === 'folder'
   )
 
+  const dragContextValue: DragContextType = {
+    dragPath,
+    dragIndex,
+    dragOverPath,
+    dragOverIndex,
+    onDragStart: handleDragStart,
+    onDragOver: handleDragOver,
+    onDragEnd: handleDragEnd,
+  }
+
   return (
-    <div className={`prev-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
-      <aside className="prev-sidebar">
-        <div className="sidebar-header">
-          <SidebarToggle collapsed={collapsed} onToggle={toggleCollapsed} />
-        </div>
-        {collapsed ? (
-          <div className="sidebar-rail">
-            {topFolders.map((folder, i) => (
-              <CollapsedFolderIcon
-                key={i}
-                item={folder}
-                onClick={toggleCollapsed}
-              />
-            ))}
+    <DragContext.Provider value={dragContextValue}>
+      <div className={`prev-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
+        <aside className="prev-sidebar">
+          <div className="sidebar-header">
+            <SidebarToggle collapsed={collapsed} onToggle={toggleCollapsed} />
           </div>
-        ) : (
-          <>
-            <nav className="sidebar-nav">
-              {orderedItems.map((item, i) => (
-                <DraggableSidebarItem
-                  key={getItemId(item)}
-                  item={item}
-                  index={i}
-                  onDragStart={handleDragStart}
-                  onDragOver={handleDragOver}
-                  onDragEnd={handleDragEnd}
-                  isDragging={dragIndex === i}
-                  dragOverIndex={dragOverIndex}
+          {collapsed ? (
+            <div className="sidebar-rail">
+              {topFolders.map((folder, i) => (
+                <CollapsedFolderIcon
+                  key={i}
+                  item={folder}
+                  onClick={toggleCollapsed}
                 />
               ))}
-            </nav>
-            <div className="sidebar-footer">
-              <WidthToggle />
-              <ThemeToggle />
             </div>
-          </>
-        )}
-      </aside>
-      <main className="prev-main">
-        {children}
-      </main>
-    </div>
+          ) : (
+            <>
+              <nav className="sidebar-nav">
+                {orderedItems.map((item, i) => (
+                  <DraggableSidebarItem
+                    key={getItemId(item)}
+                    item={item}
+                    index={i}
+                    path={ROOT_PATH}
+                  />
+                ))}
+              </nav>
+              <div className="sidebar-footer">
+                <WidthToggle />
+                <ThemeToggle />
+              </div>
+            </>
+          )}
+        </aside>
+        <main className="prev-main">
+          {children}
+        </main>
+      </div>
+    </DragContext.Provider>
   )
 }
