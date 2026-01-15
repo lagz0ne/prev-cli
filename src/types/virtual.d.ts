@@ -3,6 +3,8 @@ declare module 'virtual:prev-pages' {
     route: string
     title: string
     file: string
+    description?: string
+    frontmatter?: Record<string, unknown>
   }
 
   export interface SidebarItem {
@@ -13,6 +15,16 @@ declare module 'virtual:prev-pages' {
 
   export const pages: Page[]
   export const sidebar: SidebarItem[]
+}
+
+declare module 'virtual:prev-previews' {
+  export interface Preview {
+    name: string
+    route: string
+    htmlPath: string
+  }
+
+  export const previews: Preview[]
 }
 
 declare module '*.mdx' {
