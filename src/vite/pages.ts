@@ -117,8 +117,8 @@ export function fileToRoute(file: string): string {
 export async function scanPages(rootDir: string): Promise<Page[]> {
   const files = await fg.glob('**/*.{md,mdx}', {
     cwd: rootDir,
-    ignore: ['node_modules/**', 'dist/**', '.cache/**'],
-    dot: true
+    ignore: ['node_modules/**', 'dist/**', '.cache/**', '.*/**'],
+    dot: false
   })
 
   // Group files by route to handle index/README conflicts
