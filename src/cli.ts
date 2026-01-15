@@ -49,7 +49,21 @@ Previews:
 
   Then embed in MDX:
     import { Preview } from '@prev/theme'
+
     <Preview src="my-demo" />
+    <Preview src="my-demo" height={600} />
+    <Preview src="my-demo" title="Counter Demo" />
+
+  Preview props:
+    src      Required. Name of the preview folder
+    height   Iframe height in pixels (default: 400)
+    title    Display title (default: folder name)
+
+  DevTools (floating pill in preview):
+    - Device modes: mobile (375px), tablet (768px), desktop
+    - Custom width slider (320-1920px)
+    - Dark mode toggle
+    - Fullscreen mode
 
   Previews are bundled via esbuild-wasm in dev, and pre-compiled
   to standalone HTML files in production builds.
