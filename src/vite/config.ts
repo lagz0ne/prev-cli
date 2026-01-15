@@ -170,30 +170,59 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       // Custom plugin for serving preview routes in dev server
       {
         name: 'prev-preview-server',
+
+        // Resolve /_preview/* imports to actual preview directory files
+        resolveId(id) {
+          if (id.startsWith('/_preview/')) {
+            const relativePath = id.slice('/_preview/'.length)
+            const previewsDir = path.join(rootDir, 'previews')
+            const resolved = path.resolve(previewsDir, relativePath)
+
+            // Security: prevent path traversal
+            if (resolved.startsWith(previewsDir)) {
+              return resolved
+            }
+          }
+        },
+
         configureServer(server) {
+          // Serve preview HTML files
           server.middlewares.use(async (req, res, next) => {
             if (req.url?.startsWith('/_preview/')) {
-              const previewName = decodeURIComponent(req.url.slice('/_preview/'.length).split('?')[0])
-              const previewsDir = path.join(rootDir, 'previews')
-              const htmlPath = path.resolve(previewsDir, previewName, 'index.html')
+              // Check if this is an index.html request (no extension or ends with /)
+              const urlPath = req.url.split('?')[0]
+              const isHtmlRequest = !path.extname(urlPath) || urlPath.endsWith('/')
 
-              // Security: prevent path traversal
-              if (!htmlPath.startsWith(previewsDir)) {
-                return next()
-              }
+              if (isHtmlRequest) {
+                const previewName = decodeURIComponent(urlPath.slice('/_preview/'.length).replace(/\/$/, ''))
+                const previewsDir = path.join(rootDir, 'previews')
+                const htmlPath = path.resolve(previewsDir, previewName, 'index.html')
 
-              if (existsSync(htmlPath)) {
-                try {
-                  const html = await server.transformIndexHtml(
-                    req.url,
-                    readFileSync(htmlPath, 'utf-8')
-                  )
-                  res.setHeader('Content-Type', 'text/html')
-                  res.end(html)
-                  return
-                } catch (err) {
-                  console.error('Error serving preview:', err)
+                // Security: prevent path traversal
+                if (!htmlPath.startsWith(previewsDir)) {
                   return next()
+                }
+
+                if (existsSync(htmlPath)) {
+                  try {
+                    // Read HTML and rewrite relative paths to absolute preview paths
+                    let html = readFileSync(htmlPath, 'utf-8')
+
+                    // Rewrite relative src/href to absolute /_preview/{name}/ paths
+                    const previewBase = `/_preview/${previewName}/`
+                    html = html.replace(
+                      /(src|href)=["']\.\/([^"']+)["']/g,
+                      `$1="${previewBase}$2"`
+                    )
+
+                    const transformed = await server.transformIndexHtml(req.url, html)
+                    res.setHeader('Content-Type', 'text/html')
+                    res.end(transformed)
+                    return
+                  } catch (err) {
+                    console.error('Error serving preview:', err)
+                    return next()
+                  }
                 }
               }
             }
