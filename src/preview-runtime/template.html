@@ -189,10 +189,13 @@
     }
 
     // Listen for config from parent
+    let receivedInit = false
+
     window.addEventListener('message', async (event) => {
       const msg = event.data
 
       if (msg.type === 'init' || msg.type === 'update') {
+        receivedInit = true
         const config = msg.type === 'init' ? msg.config : { ...lastConfig, files: msg.files }
         lastConfig = config
 
@@ -208,8 +211,14 @@
       }
     })
 
-    // Signal ready to parent
-    parent.postMessage({ type: 'ready' }, '*')
+    // Signal ready to parent - retry until we receive init
+    function sendReady() {
+      if (!receivedInit) {
+        parent.postMessage({ type: 'ready' }, '*')
+        setTimeout(sendReady, 100)
+      }
+    }
+    sendReady()
   </script>
 </body>
 </html>
