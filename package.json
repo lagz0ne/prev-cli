@@ -1,6 +1,6 @@
 {
   "name": "prev-cli",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "Transform MDX directories into beautiful documentation websites",
   "type": "module",
   "license": "MIT",

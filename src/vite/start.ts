@@ -2,6 +2,9 @@
 import { createServer, build, preview } from 'vite'
 import { createViteConfig } from './config'
 import { getRandomPort } from '../utils/port'
+import { exec } from 'child_process'
+import { existsSync, rmSync } from 'fs'
+import path from 'path'
 
 export interface DevOptions {
   port?: number
@@ -23,11 +26,78 @@ function printWelcome(type: 'dev' | 'preview') {
   }
 }
 
+function printShortcuts() {
+  console.log()
+  console.log('  Shortcuts:')
+  console.log('    o  →  open in browser')
+  console.log('    c  →  clear cache')
+  console.log('    h  →  show this help')
+  console.log('    q  →  quit')
+  console.log()
+}
+
 function printReady() {
   console.log()
   console.log('  Edit your .md/.mdx files and see changes instantly.')
-  console.log('  Press Ctrl+C to stop.')
+  console.log('  Press h for shortcuts.')
   console.log()
+}
+
+function openBrowser(url: string) {
+  const platform = process.platform
+  const cmd = platform === 'darwin' ? 'open' :
+              platform === 'win32' ? 'start' : 'xdg-open'
+  exec(`${cmd} ${url}`)
+  console.log(`  ↗ Opened ${url}`)
+}
+
+function clearCache(rootDir: string) {
+  const viteCacheDir = path.join(rootDir, '.vite')
+  const nodeModulesVite = path.join(rootDir, 'node_modules', '.vite')
+
+  let cleared = 0
+
+  if (existsSync(viteCacheDir)) {
+    rmSync(viteCacheDir, { recursive: true })
+    cleared++
+  }
+
+  if (existsSync(nodeModulesVite)) {
+    rmSync(nodeModulesVite, { recursive: true })
+    cleared++
+  }
+
+  if (cleared === 0) {
+    console.log('  No cache to clear')
+  } else {
+    console.log(`  ✓ Cleared Vite cache`)
+  }
+}
+
+function setupKeyboardShortcuts(rootDir: string, url: string, quit: () => void) {
+  if (!process.stdin.isTTY) return
+
+  process.stdin.setRawMode(true)
+  process.stdin.resume()
+  process.stdin.setEncoding('utf8')
+
+  process.stdin.on('data', (key: string) => {
+    switch (key.toLowerCase()) {
+      case 'o':
+        openBrowser(url)
+        break
+      case 'c':
+        clearCache(rootDir)
+        break
+      case 'h':
+        printShortcuts()
+        break
+      case 'q':
+      case '\u0003': // Ctrl+C
+        quit()
+        break
+    }
+  })
 }
 
 export async function startDev(rootDir: string, options: DevOptions = {}) {
@@ -43,9 +113,19 @@ export async function startDev(rootDir: string, options: DevOptions = {}) {
   const server = await createServer(config)
   await server.listen()
 
+  const actualPort = server.config.server.port || port
+  const url = `http://localhost:${actualPort}/`
+
   printWelcome('dev')
   server.printUrls()
   printReady()
+
+  // Setup keyboard shortcuts
+  setupKeyboardShortcuts(rootDir, url, async () => {
+    console.log('\n  Shutting down...')
+    await server.close()
+    process.exit(0)
+  })
 
   return server
 }
