@@ -4,7 +4,7 @@ import path from 'path'
 import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { startDev, buildSite, previewSite } from './vite/start'
-import { cleanCache } from './utils/cache'
+import { cleanCache, getCacheDir } from './utils/cache'
 
 // Get version from package.json
 function getVersion(): string {
@@ -130,11 +130,24 @@ Examples:
 `)
 }
 
-function clearViteCache(rootDir: string) {
+async function clearViteCache(rootDir: string) {
+  let cleared = 0
+
+  // Clear the prev-cli cache in ~/.cache/prev/<hash>/
+  try {
+    const prevCacheDir = await getCacheDir(rootDir)
+    if (existsSync(prevCacheDir)) {
+      rmSync(prevCacheDir, { recursive: true })
+      cleared++
+      console.log(`  ✓ Removed ${prevCacheDir}`)
+    }
+  } catch {
+    // Ignore errors getting cache dir
+  }
+
+  // Also check legacy locations
   const viteCacheDir = path.join(rootDir, '.vite')
   const nodeModulesVite = path.join(rootDir, 'node_modules', '.vite')
-
-  let cleared = 0
 
   if (existsSync(viteCacheDir)) {
     rmSync(viteCacheDir, { recursive: true })
@@ -348,7 +361,7 @@ async function main() {
         break
 
       case 'clearcache':
-        clearViteCache(rootDir)
+        await clearViteCache(rootDir)
         break
 
       default:
