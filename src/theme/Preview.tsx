@@ -176,7 +176,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
         justifyContent: 'center',
         transition: 'background-color 0.15s, color 0.15s',
         backgroundColor: active ? 'var(--fd-primary, #3b82f6)' : 'transparent',
-        color: active ? '#fff' : 'var(--fd-muted-foreground, #71717a)',
+        color: active ? 'var(--fd-primary-foreground, #fff)' : 'var(--fd-muted-foreground, #71717a)',
       }}
       title={btnTitle}
       aria-label={btnTitle}
