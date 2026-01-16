@@ -39,8 +39,9 @@ const { values, positionals } = parseArgs({
 const command = positionals[0] || 'dev'
 // Priority: --cwd option > positional argument > process.cwd()
 // For 'config' command, positionals[1] is the subcommand, not the directory
+// For 'create' command, positionals[1] is the preview name, not the directory
 // Always resolve to absolute path to ensure proper cache isolation
-const rootDir = path.resolve(values.cwd || (command === 'config' ? '.' : positionals[1]) || '.')
+const rootDir = path.resolve(values.cwd || (command === 'config' || command === 'create' ? '.' : positionals[1]) || '.')
 
 function printHelp() {
   console.log(`
