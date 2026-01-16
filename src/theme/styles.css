@@ -2,6 +2,12 @@
   Prev CLI Theme - Lightweight Documentation Layout
 */
 
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Reset */
 *, *::before, *::after {
   box-sizing: border-box;

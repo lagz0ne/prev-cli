@@ -217,7 +217,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
     setDeviceMode('desktop') // Clear device mode when using custom
   }
 
-  // Icon button component
+  // Icon button component - using inline styles since Tailwind isn't enabled for docs
   const IconButton = ({
     onClick,
     active,
@@ -231,11 +231,18 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
   }) => (
     <button
       onClick={onClick}
-      className={`p-1.5 rounded transition-colors ${
-        active
-          ? 'bg-blue-500 text-white'
-          : 'text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700 hover:text-zinc-700 dark:hover:text-zinc-300'
-      }`}
+      style={{
+        padding: '6px',
+        borderRadius: '4px',
+        border: 'none',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'background-color 0.15s, color 0.15s',
+        backgroundColor: active ? '#3b82f6' : 'transparent',
+        color: active ? '#fff' : '#71717a',
+      }}
       title={btnTitle}
       aria-label={btnTitle}
     >
@@ -243,30 +250,47 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
     </button>
   )
 
-  // Floating DevTools Pill
+  // Floating DevTools Pill - using inline styles since Tailwind isn't enabled for docs
   const DevToolsPill = () => {
-    const pillStyle: React.CSSProperties = pillPosition.x === 0 && pillPosition.y === 0
+    const baseStyle: React.CSSProperties = {
+      position: 'absolute',
+      zIndex: 50,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2px',
+      padding: '4px 6px',
+      backgroundColor: '#fff',
+      borderRadius: '8px',
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+      border: '1px solid #e4e4e7',
+    }
+
+    const positionStyle: React.CSSProperties = pillPosition.x === 0 && pillPosition.y === 0
       ? { bottom: 12, right: 12 }
       : { left: pillPosition.x, top: pillPosition.y }
+
+    const dividerStyle: React.CSSProperties = {
+      width: '1px',
+      height: '16px',
+      backgroundColor: '#e4e4e7',
+      margin: '0 2px',
+    }
 
     return (
       <div
         ref={pillRef}
-        className={`absolute z-50 flex items-center gap-0.5 px-1.5 py-1 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 ${
-          isDragging ? 'cursor-grabbing' : ''
-        }`}
-        style={pillStyle}
+        style={{ ...baseStyle, ...positionStyle, cursor: isDragging ? 'grabbing' : undefined }}
       >
         {/* Drag handle */}
         <div
           onMouseDown={handleMouseDown}
-          className="p-1 cursor-grab text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
+          style={{ padding: '4px', cursor: 'grab', color: '#a1a1aa' }}
           title="Drag to move"
         >
-          <GripVertical className="w-3 h-3" />
+          <GripVertical style={{ width: 12, height: 12 }} />
         </div>
 
-        <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+        <div style={dividerStyle} />
 
         {/* Device modes */}
         <IconButton
@@ -274,7 +298,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           active={deviceMode === 'mobile' && customWidth === null}
           title="Mobile (375px)"
         >
-          <Smartphone className="w-3.5 h-3.5" />
+          <Smartphone style={{ width: 14, height: 14 }} />
         </IconButton>
 
         <IconButton
@@ -282,7 +306,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           active={deviceMode === 'tablet' && customWidth === null}
           title="Tablet (768px)"
         >
-          <Tablet className="w-3.5 h-3.5" />
+          <Tablet style={{ width: 14, height: 14 }} />
         </IconButton>
 
         <IconButton
@@ -290,31 +314,43 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           active={deviceMode === 'desktop' && customWidth === null}
           title="Desktop (100%)"
         >
-          <Monitor className="w-3.5 h-3.5" />
+          <Monitor style={{ width: 14, height: 14 }} />
         </IconButton>
 
-        <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+        <div style={dividerStyle} />
 
         {/* Width slider toggle */}
-        <div className="relative">
+        <div style={{ position: 'relative' }}>
           <IconButton
             onClick={() => setShowSlider(!showSlider)}
             active={showSlider || customWidth !== null}
             title="Custom width"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <SlidersHorizontal style={{ width: 14, height: 14 }} />
           </IconButton>
 
           {/* Slider popup */}
           {showSlider && (
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-white dark:bg-zinc-800 rounded-lg shadow-lg border border-zinc-200 dark:border-zinc-700 min-w-48">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-zinc-500">Width: {customWidth ?? currentWidth ?? '100%'}px</span>
+            <div style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              marginBottom: '8px',
+              padding: '12px',
+              backgroundColor: '#fff',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+              border: '1px solid #e4e4e7',
+              minWidth: '192px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#71717a' }}>Width: {customWidth ?? currentWidth ?? '100%'}px</span>
                 <button
                   onClick={() => setShowSlider(false)}
-                  className="p-0.5 text-zinc-400 hover:text-zinc-600"
+                  style={{ padding: '2px', background: 'none', border: 'none', cursor: 'pointer', color: '#a1a1aa' }}
                 >
-                  <X className="w-3 h-3" />
+                  <X style={{ width: 12, height: 12 }} />
                 </button>
               </div>
               <input
@@ -323,9 +359,9 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
                 max={1920}
                 value={customWidth ?? (typeof currentWidth === 'number' ? currentWidth : 1920)}
                 onChange={(e) => handleSliderChange(parseInt(e.target.value))}
-                className="w-full accent-blue-500"
+                style={{ width: '100%', accentColor: '#3b82f6' }}
               />
-              <div className="flex justify-between text-xs text-zinc-400 mt-1">
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a1a1aa', marginTop: '4px' }}>
                 <span>320px</span>
                 <span>1920px</span>
               </div>
@@ -333,7 +369,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           )}
         </div>
 
-        <div className="w-px h-4 bg-zinc-200 dark:bg-zinc-700 mx-0.5" />
+        <div style={dividerStyle} />
 
         {/* Dark mode toggle */}
         <IconButton
@@ -341,7 +377,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           active={isDarkMode}
           title={isDarkMode ? 'Light mode' : 'Dark mode'}
         >
-          {isDarkMode ? <Moon className="w-3.5 h-3.5" /> : <SunMedium className="w-3.5 h-3.5" />}
+          {isDarkMode ? <Moon style={{ width: 14, height: 14 }} /> : <SunMedium style={{ width: 14, height: 14 }} />}
         </IconButton>
 
         {/* Fullscreen toggle */}
@@ -350,7 +386,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
           active={isFullscreen}
           title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
         >
-          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          {isFullscreen ? <Minimize2 style={{ width: 14, height: 14 }} /> : <Maximize2 style={{ width: 14, height: 14 }} />}
         </IconButton>
       </div>
     )
@@ -370,11 +406,22 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
 
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 z-40 bg-zinc-100 dark:bg-zinc-900 flex items-start justify-center overflow-auto">
+      <div style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 40,
+        backgroundColor: '#f4f4f5',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        overflow: 'auto',
+      }}>
         {/* Checkered background pattern */}
         <div
-          className="absolute inset-0 opacity-50"
           style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: 0.5,
             backgroundImage: 'linear-gradient(45deg, #e5e5e5 25%, transparent 25%), linear-gradient(-45deg, #e5e5e5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e5e5 75%), linear-gradient(-45deg, transparent 75%, #e5e5e5 75%)',
             backgroundSize: '20px 20px',
             backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
@@ -383,13 +430,19 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
 
         {/* Iframe container */}
         <div
-          className="relative bg-white dark:bg-zinc-900 shadow-2xl transition-all duration-300 h-full"
-          style={getIframeContainerStyle()}
+          style={{
+            position: 'relative',
+            backgroundColor: '#fff',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+            transition: 'all 0.3s',
+            height: '100%',
+            ...getIframeContainerStyle(),
+          }}
         >
           <iframe
             ref={iframeRef}
             src={previewUrl}
-            className="w-full h-full"
+            style={{ width: '100%', height: '100%', border: 'none' }}
             title={displayTitle}
           />
         </div>
@@ -402,26 +455,39 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
   return (
     <div
       ref={containerRef}
-      className="my-4 border border-zinc-200 dark:border-zinc-700 rounded-lg overflow-hidden relative"
+      style={{
+        margin: '16px 0',
+        border: '1px solid #e4e4e7',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 12px',
+        backgroundColor: '#fafafa',
+        borderBottom: '1px solid #e4e4e7',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', fontWeight: 500, color: '#52525b' }}>
             {displayTitle}
           </span>
           {mode === 'wasm' && buildStatus === 'building' && (
-            <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+            <Loader2 style={{ width: 14, height: 14, color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
           )}
           {mode === 'wasm' && buildStatus === 'error' && (
-            <span className="text-xs text-red-500">Error</span>
+            <span style={{ fontSize: '12px', color: '#ef4444' }}>Error</span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {mode === 'wasm' && buildTime && (
-            <span className="text-xs text-zinc-400">{buildTime}ms</span>
+            <span style={{ fontSize: '12px', color: '#a1a1aa' }}>{buildTime}ms</span>
           )}
-          <span className="text-xs text-zinc-400">
+          <span style={{ fontSize: '12px', color: '#a1a1aa' }}>
             {currentWidth ? `${currentWidth}px` : '100%'}
           </span>
         </div>
@@ -429,8 +495,20 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
 
       {/* Build error display */}
       {mode === 'wasm' && buildError && (
-        <div className="px-3 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800">
-          <pre className="text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap font-mono overflow-auto max-h-32">
+        <div style={{
+          padding: '8px 12px',
+          backgroundColor: '#fef2f2',
+          borderBottom: '1px solid #fecaca',
+        }}>
+          <pre style={{
+            fontSize: '12px',
+            color: '#dc2626',
+            whiteSpace: 'pre-wrap',
+            fontFamily: 'monospace',
+            overflow: 'auto',
+            maxHeight: '128px',
+            margin: 0,
+          }}>
             {buildError}
           </pre>
         </div>
@@ -438,8 +516,9 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
 
       {/* Preview area with checkered background */}
       <div
-        className="relative bg-zinc-100 dark:bg-zinc-900"
         style={{
+          position: 'relative',
+          backgroundColor: '#f4f4f5',
           backgroundImage: 'linear-gradient(45deg, #e5e5e5 25%, transparent 25%), linear-gradient(-45deg, #e5e5e5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e5e5 75%), linear-gradient(-45deg, transparent 75%, #e5e5e5 75%)',
           backgroundSize: '16px 16px',
           backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
@@ -447,14 +526,20 @@ export function Preview({ src, height = 400, title, mode = 'wasm' }: PreviewProp
       >
         {/* Iframe container */}
         <div
-          className="bg-white dark:bg-zinc-900 transition-all duration-300"
-          style={getIframeContainerStyle()}
+          style={{
+            backgroundColor: '#fff',
+            transition: 'all 0.3s',
+            ...getIframeContainerStyle(),
+          }}
         >
           <iframe
             ref={iframeRef}
             src={previewUrl}
-            style={{ height: typeof height === 'number' ? `${height}px` : height }}
-            className="w-full"
+            style={{
+              height: typeof height === 'number' ? `${height}px` : height,
+              width: '100%',
+              border: 'none',
+            }}
             title={displayTitle}
           />
         </div>
