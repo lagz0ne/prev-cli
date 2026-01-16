@@ -30,7 +30,6 @@ const { values, positionals } = parseArgs({
     port: { type: 'string', short: 'p' },
     days: { type: 'string', short: 'd' },
     cwd: { type: 'string', short: 'c' },
-    include: { type: 'string', short: 'i', multiple: true },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' }
   },
@@ -65,7 +64,6 @@ Config subcommands:
 Options:
   -c, --cwd <path>       Set working directory
   -p, --port <port>      Specify port (dev/preview)
-  -i, --include <dir>    Include dot-prefixed directory (can use multiple times)
   -d, --days <days>      Cache age threshold for clean (default: 30)
   -h, --help             Show this help message
   -v, --version          Show version number
@@ -138,7 +136,6 @@ Examples:
   prev build                 Build static site to ./dist
   prev create                Create example preview in previews/example/
   prev create my-demo        Create preview in previews/my-demo/
-  prev -i .c3                Include .c3 directory in docs
   prev clean -d 7            Remove caches older than 7 days
 `)
 }
@@ -445,8 +442,7 @@ async function main() {
   // -p flag takes precedence over config.port
   const port = values.port ? parseInt(values.port, 10) : config.port
   const days = values.days ? parseInt(values.days, 10) : 30
-  // Merge CLI includes with config includes (CLI flags add to config)
-  const include = [...(config.include || []), ...(values.include || [])]
+  const include = config.include || []
 
   try {
     switch (command) {
