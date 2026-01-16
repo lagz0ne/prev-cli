@@ -1,0 +1,64 @@
+import { Preview } from '@prev/theme'
+
+# Button
+
+Interactive buttons with multiple variants and states.
+
+<Preview src="button-demo" height={500} />
+
+---
+
+## Variants
+
+| Variant | Usage |
+|---------|-------|
+| `default` | Primary actions |
+| `secondary` | Less prominent actions |
+| `outline` | Bordered, transparent background |
+| `ghost` | No background until hover |
+| `destructive` | Dangerous actions (delete, remove) |
+
+---
+
+## Sizes
+
+| Size | Height | Padding |
+|------|--------|---------|
+| `sm` | 36px | `px-3` |
+| `default` | 40px | `px-4 py-2` |
+| `lg` | 44px | `px-8` |
+| `icon` | 40px | Square, centered icon |
+
+---
+
+## Usage
+
+```tsx
+import { Button } from '@prev/ui'
+
+// Default button
+<Button>Click me</Button>
+
+// With variant
+<Button variant="secondary">Cancel</Button>
+
+// With size
+<Button size="lg">Submit</Button>
+
+// Disabled state
+<Button disabled>Unavailable</Button>
+
+// Loading state
+<Button disabled>
+  <Spinner /> Processing...
+</Button>
+```
+
+---
+
+## Accessibility
+
+- Uses native `<button>` element
+- Focus ring on keyboard navigation (`focus-visible`)
+- Disabled state prevents interaction and reduces opacity
+- Sufficient color contrast in all variants

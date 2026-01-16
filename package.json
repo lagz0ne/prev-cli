@@ -35,6 +35,7 @@
   },
   "scripts": {
     "build": "bun build src/cli.ts --outdir dist --target node --packages external && tsc --emitDeclarationOnly",
+    "build:docs": "bun run build && bun ./dist/cli.js build",
     "dev": "tsc --watch",
     "test": "bun test src",
     "test:integration": "bun run build && bun test test/integration.test.ts",

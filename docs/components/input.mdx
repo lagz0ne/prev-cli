@@ -1,0 +1,87 @@
+import { Preview } from '@prev/theme'
+
+# Input
+
+Form inputs with labels, validation, and helper text.
+
+<Preview src="input-demo" height={500} />
+
+---
+
+## Anatomy
+
+| Part | Purpose |
+|------|---------|
+| Label | Identifies the field |
+| Input | The text entry area |
+| Helper text | Additional context or instructions |
+| Error message | Validation feedback |
+
+---
+
+## States
+
+| State | Appearance |
+|-------|------------|
+| Default | Stone border, white background |
+| Focus | Ring highlight, primary border |
+| Error | Red border, error message shown |
+| Disabled | Reduced opacity, no interaction |
+
+---
+
+## Usage
+
+```tsx
+import { Input, Label } from '@prev/ui'
+
+// Basic input
+<div>
+  <Label htmlFor="email">Email</Label>
+  <Input
+    id="email"
+    type="email"
+    placeholder="you@example.com"
+  />
+</div>
+
+// With error state
+<div>
+  <Label htmlFor="password">Password</Label>
+  <Input
+    id="password"
+    type="password"
+    className="border-red-500"
+  />
+  <p className="text-sm text-red-500 mt-1">
+    Password must be at least 8 characters
+  </p>
+</div>
+
+// Disabled
+<Input disabled placeholder="Not available" />
+```
+
+---
+
+## Styling
+
+| Property | Value |
+|----------|-------|
+| Height | `h-10` (40px) |
+| Padding | `px-3 py-2` |
+| Border | `border rounded-md` |
+| Focus | `focus-visible:ring-2` |
+
+---
+
+## Form Patterns
+
+### With character count
+Show remaining characters for length-limited fields.
+
+### With validation
+Display error state and message on invalid input.
+
+### With icon
+Prefix or suffix icons for context (search, password toggle).

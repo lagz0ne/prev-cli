@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.font-sans {
+  font-family: 'DM Sans', system-ui, sans-serif;
+}

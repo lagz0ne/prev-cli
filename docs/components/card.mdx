@@ -1,0 +1,76 @@
+import { Preview } from '@prev/theme'
+
+# Card
+
+Content containers with composable sections.
+
+<Preview src="card-demo" height={600} />
+
+---
+
+## Composition
+
+Cards are built from composable parts:
+
+| Part | Purpose |
+|------|---------|
+| `Card` | Container with border and shadow |
+| `CardHeader` | Top section with title and description |
+| `CardTitle` | Main heading |
+| `CardDescription` | Subtitle or summary |
+| `CardContent` | Main content area |
+| `CardFooter` | Bottom section for actions |
+
+---
+
+## Usage
+
+```tsx
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from '@prev/ui'
+
+<Card>
+  <CardHeader>
+    <CardTitle>Account Settings</CardTitle>
+    <CardDescription>
+      Manage your account preferences
+    </CardDescription>
+  </CardHeader>
+  <CardContent>
+    <p>Your content here...</p>
+  </CardContent>
+  <CardFooter>
+    <Button>Save Changes</Button>
+  </CardFooter>
+</Card>
+```
+
+---
+
+## Styling
+
+| Property | Value |
+|----------|-------|
+| Background | `bg-card` (white / stone-800) |
+| Border | `border` with `rounded-lg` |
+| Shadow | `shadow-sm` |
+| Padding | `p-6` for header/content/footer |
+
+---
+
+## Patterns
+
+### Simple card
+Just `Card` and `CardContent` for basic containers.
+
+### Action card
+Include `CardFooter` with buttons for interactive cards.
+
+### Clickable card
+Wrap entire card in a link or add `cursor-pointer` and click handler.
