@@ -5,7 +5,8 @@ import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { startDev, buildSite, previewSite } from './vite/start'
 import { cleanCache, getCacheDir } from './utils/cache'
-import { loadConfig } from './config'
+import { loadConfig, saveConfig, findConfigFile, defaultConfig } from './config'
+import yaml from 'js-yaml'
 
 // Get version from package.json
 function getVersion(): string {
@@ -50,8 +51,15 @@ Usage:
   prev build [options]        Build for production
   prev preview [options]      Preview production build
   prev create [name]          Create preview in previews/<name>/ (default: "example")
+  prev config [subcommand]    Manage configuration
   prev clearcache             Clear Vite cache (.vite directory)
   prev clean [options]        Remove old prev-cli caches
+
+Config subcommands:
+  prev config                 Show current configuration
+  prev config show            Show current configuration (same as above)
+  prev config init            Create .prev.yaml with defaults
+  prev config path            Show config file path
 
 Options:
   -c, --cwd <path>       Set working directory
@@ -166,6 +174,94 @@ async function clearViteCache(rootDir: string) {
     console.log('  No Vite cache found')
   } else {
     console.log(`\n  Cleared ${cleared} cache director${cleared === 1 ? 'y' : 'ies'}`)
+  }
+}
+
+function handleConfig(rootDir: string, subcommand: string | undefined) {
+  const configPath = findConfigFile(rootDir)
+  const config = loadConfig(rootDir)
+
+  switch (subcommand) {
+    case undefined:
+    case 'show': {
+      console.log('\n  📄 Configuration\n')
+
+      if (configPath) {
+        console.log(`  File: ${configPath}\n`)
+      } else {
+        console.log(`  File: (none - using defaults)\n`)
+      }
+
+      // Show config as YAML
+      const yamlOutput = yaml.dump(config, {
+        indent: 2,
+        lineWidth: -1,
+        quotingType: '"',
+        forceQuotes: false
+      })
+
+      // Indent the output
+      const indented = yamlOutput.split('\n').map(line => `  ${line}`).join('\n')
+      console.log(indented)
+
+      if (!configPath) {
+        console.log(`\n  Run 'prev config init' to create a config file.\n`)
+      }
+      break
+    }
+
+    case 'init': {
+      const targetPath = path.join(rootDir, '.prev.yaml')
+
+      if (configPath) {
+        console.log(`\n  Config already exists: ${configPath}\n`)
+        process.exit(1)
+      }
+
+      // Create config with comments for documentation
+      const configContent = `# prev-cli configuration
+# See: https://github.com/lagz0ne/prev-cli
+
+# Theme: light | dark | system
+theme: system
+
+# Content width: constrained | full
+contentWidth: constrained
+
+# Port for dev server (optional, can be overridden with -p flag)
+# port: 3000
+
+# Hidden pages (glob patterns)
+hidden: []
+  # - "internal/**"
+  # - "wip-*.md"
+
+# Custom page ordering per directory
+order: {}
+  # "/":
+  #   - "getting-started.md"
+  #   - "guides/"
+`
+
+      writeFileSync(targetPath, configContent, 'utf-8')
+      console.log(`\n  ✨ Created ${targetPath}\n`)
+      break
+    }
+
+    case 'path': {
+      if (configPath) {
+        console.log(configPath)
+      } else {
+        console.log(`(no config file found in ${rootDir})`)
+        process.exit(1)
+      }
+      break
+    }
+
+    default:
+      console.error(`Unknown config subcommand: ${subcommand}`)
+      console.log(`\nAvailable subcommands: show, init, path`)
+      process.exit(1)
   }
 }
 
@@ -365,6 +461,10 @@ async function main() {
 
       case 'clearcache':
         await clearViteCache(rootDir)
+        break
+
+      case 'config':
+        handleConfig(rootDir, positionals[1])
         break
 
       default:
