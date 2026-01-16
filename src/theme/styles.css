@@ -738,3 +738,76 @@ body {
 .sidebar-item-wrapper[draggable="true"]:active {
   cursor: grabbing;
 }
+
+/* ===========================================
+   Sidebar Previews Link
+   =========================================== */
+
+.sidebar-previews {
+  padding: 0.5rem;
+  border-top: 1px solid var(--fd-border);
+}
+
+.sidebar-previews-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  color: var(--fd-muted-foreground);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.sidebar-previews-link:hover {
+  background: var(--fd-muted);
+  color: var(--fd-foreground);
+}
+
+.sidebar-previews-link.active {
+  background: var(--fd-accent);
+  color: var(--fd-accent-foreground);
+}
+
+.sidebar-previews-icon {
+  font-size: 1.1rem;
+}
+
+.sidebar-previews-count {
+  margin-left: auto;
+  padding: 0.125rem 0.5rem;
+  background: var(--fd-muted);
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--fd-muted-foreground);
+}
+
+.sidebar-previews-link.active .sidebar-previews-count {
+  background: var(--fd-background);
+  color: var(--fd-foreground);
+}
+
+/* ===========================================
+   Floating Layout - New Toolbar-Based Layout
+   =========================================== */
+
+.prev-layout-floating {
+  min-height: 100vh;
+}
+
+.prev-main-floating {
+  padding: 2rem;
+  max-width: 100%;
+}
+
+.prev-main-floating .prev-content {
+  max-width: 72ch;
+  margin: 0 auto;
+}
+
+.full-width .prev-main-floating .prev-content {
+  max-width: none;
+}
