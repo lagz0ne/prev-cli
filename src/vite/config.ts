@@ -339,6 +339,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'react': path.join(cliNodeModules, 'react'),
         'react-dom': path.join(cliNodeModules, 'react-dom'),
         '@tanstack/react-router': path.join(cliNodeModules, '@tanstack/react-router'),
+        // MDX provider for auto-import
+        '@mdx-js/react': path.join(cliNodeModules, '@mdx-js/react'),
         // Diagram libraries
         'mermaid': path.join(cliNodeModules, 'mermaid'),
         'dayjs': path.join(cliNodeModules, 'dayjs'),
