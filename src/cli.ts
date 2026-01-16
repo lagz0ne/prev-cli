@@ -1,9 +1,26 @@
 #!/usr/bin/env node
 import { parseArgs } from 'util'
 import path from 'path'
-import { existsSync, mkdirSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
 import { startDev, buildSite, previewSite } from './vite/start'
 import { cleanCache } from './utils/cache'
+
+// Get version from package.json
+function getVersion(): string {
+  try {
+    let dir = path.dirname(fileURLToPath(import.meta.url))
+    for (let i = 0; i < 5; i++) {
+      const pkgPath = path.join(dir, 'package.json')
+      if (existsSync(pkgPath)) {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'))
+        if (pkg.name === 'prev-cli') return pkg.version
+      }
+      dir = path.dirname(dir)
+    }
+  } catch {}
+  return 'unknown'
+}
 
 const { values, positionals } = parseArgs({
   args: process.argv.slice(2),
@@ -12,7 +29,8 @@ const { values, positionals } = parseArgs({
     days: { type: 'string', short: 'd' },
     cwd: { type: 'string', short: 'c' },
     include: { type: 'string', short: 'i', multiple: true },
-    help: { type: 'boolean', short: 'h' }
+    help: { type: 'boolean', short: 'h' },
+    version: { type: 'boolean', short: 'v' }
   },
   allowPositionals: true
 })
@@ -31,7 +49,8 @@ Usage:
   prev build [options]        Build for production
   prev preview [options]      Preview production build
   prev create [name]          Create preview in previews/<name>/ (default: "example")
-  prev clean [options]        Remove old cache directories
+  prev clearcache             Clear Vite cache (.vite directory)
+  prev clean [options]        Remove old prev-cli caches
 
 Options:
   -c, --cwd <path>       Set working directory
@@ -39,6 +58,7 @@ Options:
   -i, --include <dir>    Include dot-prefixed directory (can use multiple times)
   -d, --days <days>      Cache age threshold for clean (default: 30)
   -h, --help             Show this help message
+  -v, --version          Show version number
 
 Previews:
   Previews must be in the previews/ directory at your project root.
@@ -81,6 +101,31 @@ Examples:
   prev -i .c3                Include .c3 directory in docs
   prev clean -d 7            Remove caches older than 7 days
 `)
+}
+
+function clearViteCache(rootDir: string) {
+  const viteCacheDir = path.join(rootDir, '.vite')
+  const nodeModulesVite = path.join(rootDir, 'node_modules', '.vite')
+
+  let cleared = 0
+
+  if (existsSync(viteCacheDir)) {
+    rmSync(viteCacheDir, { recursive: true })
+    cleared++
+    console.log(`  ✓ Removed .vite/`)
+  }
+
+  if (existsSync(nodeModulesVite)) {
+    rmSync(nodeModulesVite, { recursive: true })
+    cleared++
+    console.log(`  ✓ Removed node_modules/.vite/`)
+  }
+
+  if (cleared === 0) {
+    console.log('  No Vite cache found')
+  } else {
+    console.log(`\n  Cleared ${cleared} cache director${cleared === 1 ? 'y' : 'ies'}`)
+  }
 }
 
 function createPreview(rootDir: string, name: string) {
@@ -237,6 +282,11 @@ export default function App() {
 }
 
 async function main() {
+  if (values.version) {
+    console.log(`prev-cli v${getVersion()}`)
+    process.exit(0)
+  }
+
   if (values.help) {
     printHelp()
     process.exit(0)
@@ -268,6 +318,10 @@ async function main() {
       case 'create':
         const previewName = positionals[1] || 'example'
         createPreview(rootDir, previewName)
+        break
+
+      case 'clearcache':
+        clearViteCache(rootDir)
         break
 
       default:
