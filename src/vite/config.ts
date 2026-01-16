@@ -161,7 +161,8 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     plugins: [
       mdx({
         remarkPlugins: [remarkGfm],
-        rehypePlugins: [rehypeHighlight]
+        rehypePlugins: [rehypeHighlight],
+        providerImportSource: '@mdx-js/react',
       }),
       react(),
       createConfigPlugin(config),

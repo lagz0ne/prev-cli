@@ -136,7 +136,17 @@ export async function scanPages(rootDir: string, options: ScanOptions = {}): Pro
   }
 
   // Build ignore patterns - always ignore these, plus dot dirs not in include list
-  const ignore = ['node_modules/**', 'dist/**', '.cache/**']
+  const ignore = [
+    'node_modules/**',
+    'dist/**',
+    '.cache/**',
+    // Common non-documentation files at root
+    'CLAUDE.md',
+    'CHANGELOG.md',
+    'CONTRIBUTING.md',
+    'LICENSE.md',
+    'SECURITY.md',
+  ]
 
   const files = await fg.glob(patterns, {
     cwd: rootDir,
