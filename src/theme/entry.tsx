@@ -343,17 +343,24 @@ const rootRoute = createRootRoute({
   component: RootLayout,
 })
 
-// Previews catalog route
-const previewsRoute = createRoute({
+// Previews layout route (just passes through to children)
+const previewsLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/previews',
+  component: () => <Outlet />,
+})
+
+// Previews catalog route (index)
+const previewsCatalogRoute = createRoute({
+  getParentRoute: () => previewsLayoutRoute,
+  path: '/',
   component: PreviewsCatalog,
 })
 
-// Individual preview route (uses splat to capture nested paths like buttons/primary)
+// Individual preview route (splat captures nested paths like buttons/primary)
 const previewDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/previews/$',
+  getParentRoute: () => previewsLayoutRoute,
+  path: '$',
   component: PreviewPage,
 })
 
@@ -390,9 +397,14 @@ function NotFoundPage() {
 }
 
 // Create router with notFoundRoute
-const routeTree = rootRoute.addChildren([
-  previewsRoute,
+// Previews routes: layout with catalog (index) and detail (splat) children
+const previewsRouteWithChildren = previewsLayoutRoute.addChildren([
+  previewsCatalogRoute,
   previewDetailRoute,
+])
+
+const routeTree = rootRoute.addChildren([
+  previewsRouteWithChildren,
   ...(indexRedirectRoute ? [indexRedirectRoute] : []),
   ...pageRoutes,
 ])
