@@ -3,7 +3,7 @@ import { createServer, build, preview } from 'vite'
 import { createViteConfig } from './config'
 import { getRandomPort } from '../utils/port'
 import { exec } from 'child_process'
-import { existsSync, rmSync } from 'fs'
+import { existsSync, rmSync, copyFileSync } from 'fs'
 import path from 'path'
 
 export interface DevOptions {
@@ -145,6 +145,14 @@ export async function buildSite(rootDir: string, options: BuildOptions = {}) {
   })
 
   await build(config)
+
+  // Create 404.html for SPA fallback (GitHub Pages, etc.)
+  const distDir = path.join(rootDir, 'dist')
+  const indexPath = path.join(distDir, 'index.html')
+  const notFoundPath = path.join(distDir, '404.html')
+  if (existsSync(indexPath)) {
+    copyFileSync(indexPath, notFoundPath)
+  }
 
   console.log()
   console.log('  Done! Your site is ready in ./dist')

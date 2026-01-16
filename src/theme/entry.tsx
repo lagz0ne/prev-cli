@@ -409,8 +409,12 @@ const routeTree = rootRoute.addChildren([
   ...(indexRedirectRoute ? [indexRedirectRoute] : []),
   ...pageRoutes,
 ])
+// Get base path for subpath deployments (e.g., GitHub Pages)
+const basepath = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '') || '/'
+
 const router = createRouter({
   routeTree,
+  basepath,
   defaultNotFoundComponent: NotFoundPage,
 })
 
