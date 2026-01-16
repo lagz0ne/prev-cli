@@ -70,6 +70,8 @@ Previews:
   Previews are bundled via esbuild-wasm in dev, and pre-compiled
   to standalone HTML files in production builds.
 
+  Browse all previews at /previews (Storybook-like catalog).
+
 Examples:
   prev                       Start dev server on random port
   prev -p 3000               Start dev server on port 3000
