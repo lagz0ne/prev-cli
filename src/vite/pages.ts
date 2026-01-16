@@ -2,6 +2,7 @@
 import fg from 'fast-glob'
 import { readFile } from 'fs/promises'
 import path from 'path'
+import picomatch from 'picomatch'
 
 export interface Frontmatter {
   title?: string
@@ -15,6 +16,7 @@ export interface Page {
   file: string
   description?: string
   frontmatter?: Frontmatter
+  hidden?: boolean
 }
 
 export interface SidebarItem {
@@ -116,6 +118,7 @@ export function fileToRoute(file: string): string {
 
 export interface ScanOptions {
   include?: string[]
+  hidden?: string[]
 }
 
 export async function scanPages(rootDir: string, options: ScanOptions = {}): Promise<Page[]> {
@@ -192,10 +195,29 @@ export async function scanPages(rootDir: string, options: ScanOptions = {}): Pro
       page.frontmatter = frontmatter
     }
 
+    // Check if page is hidden via frontmatter
+    if (frontmatter.hidden === true) {
+      page.hidden = true
+    }
+
     pages.push(page)
   }
 
   return pages.sort((a, b) => a.route.localeCompare(b.route))
+}
+
+// Filter visible pages for navigation (hidden pages still accessible by URL)
+export function filterVisiblePages(pages: Page[], hiddenPatterns: string[]): Page[] {
+  if (hiddenPatterns.length === 0) {
+    return pages.filter(p => !p.hidden)
+  }
+
+  const isMatch = picomatch(hiddenPatterns)
+
+  return pages.filter(page => {
+    if (page.hidden) return false
+    return !isMatch(page.file)
+  })
 }
 
 function extractTitle(content: string, file: string, frontmatter?: Frontmatter): string {
