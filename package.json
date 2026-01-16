@@ -48,6 +48,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "esbuild": "^0.27.2",
     "fast-glob": "^3.3.0",
     "fumadocs-core": "^16.4.3",
     "fumadocs-ui": "^16.4.3",
@@ -59,9 +60,9 @@
     "react-router-dom": "^7.0.0",
     "rehype-highlight": "^7.0.0",
     "remark-gfm": "^4.0.0",
-    "vite": "npm:rolldown-vite@^7.3.1",
     "tailwind-merge": "^2.5.0",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "vite": "npm:rolldown-vite@^7.3.1"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
