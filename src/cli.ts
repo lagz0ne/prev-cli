@@ -30,7 +30,7 @@ Usage:
   prev [options]              Start development server
   prev build [options]        Build for production
   prev preview [options]      Preview production build
-  prev create [name]          Create example preview (default: "example")
+  prev create [name]          Create preview in previews/<name>/ (default: "example")
   prev clean [options]        Remove old cache directories
 
 Options:
@@ -41,13 +41,13 @@ Options:
   -h, --help             Show this help message
 
 Previews:
-  Create interactive previews in your docs by adding React components
-  to the previews/ directory:
+  Previews must be in the previews/ directory at your project root.
+  Each preview is a subfolder with React components:
 
-    previews/
-      my-demo/
-        App.tsx          # React component (entry)
-        styles.css       # Optional CSS
+    previews/                # Required location
+      my-demo/               # Preview name (used in <Preview src="...">)
+        App.tsx              # React component (entry point)
+        styles.css           # Optional CSS
 
   Then embed in MDX:
     import { Preview } from '@prev/theme'
@@ -219,17 +219,18 @@ export default function App() {
   writeFileSync(path.join(previewDir, 'styles.css'), stylesCss)
 
   console.log(`
-  ✨ Created preview: ${name}
+  ✨ Created preview: previews/${name}/
 
   Files:
-    previews/${name}/App.tsx      React component
-    previews/${name}/styles.css   Custom styles
+    previews/${name}/App.tsx      React component (entry point)
+    previews/${name}/styles.css   Custom animations
 
-  Usage in MDX:
+  Embed in your MDX:
     import { Preview } from '@prev/theme'
     <Preview src="${name}" />
 
-  Run 'prev' to start the dev server and see it in action.
+  Start dev server:
+    prev
 `)
 }
 
