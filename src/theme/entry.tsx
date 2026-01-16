@@ -85,7 +85,7 @@ function PageWrapper({ Component, meta }: { Component: React.ComponentType; meta
   )
 }
 
-// Previews catalog - Storybook-like gallery
+// Previews catalog - Storybook-like gallery with clickable cards
 function PreviewsCatalog() {
   if (!previews || previews.length === 0) {
     return (
@@ -116,59 +116,113 @@ function PreviewsCatalog() {
           Previews
         </h1>
         <p style={{ color: '#666' }}>
-          {previews.length} component preview{previews.length !== 1 ? 's' : ''} available
+          {previews.length} component preview{previews.length !== 1 ? 's' : ''} available.
+          Click any preview to open it.
         </p>
       </div>
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-        gap: '24px',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+        gap: '20px',
       }}>
         {previews.map((preview: { name: string; route: string }) => (
-          <div key={preview.name} style={{
-            border: '1px solid #e4e4e7',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            backgroundColor: '#fff',
-          }}>
-            <div style={{
-              padding: '12px 16px',
-              borderBottom: '1px solid #e4e4e7',
-              backgroundColor: '#fafafa',
-            }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>
-                {preview.name}
-              </h2>
-              <code style={{
-                fontSize: '12px',
-                color: '#666',
-                fontFamily: 'monospace',
-              }}>
-                previews/{preview.name}/
-              </code>
-            </div>
-            <Preview src={preview.name} height={300} />
-          </div>
+          <PreviewCard key={preview.name} name={preview.name} />
         ))}
       </div>
 
       <div style={{
         marginTop: '40px',
         padding: '16px',
-        backgroundColor: '#f0f9ff',
-        border: '1px solid #bae6fd',
+        backgroundColor: 'var(--fd-muted)',
+        border: '1px solid var(--fd-border)',
         borderRadius: '8px',
       }}>
-        <p style={{ margin: 0, fontSize: '14px', color: '#0369a1' }}>
+        <p style={{ margin: 0, fontSize: '14px', color: 'var(--fd-muted-foreground)' }}>
           <strong>Tip:</strong> Embed any preview in your MDX docs with{' '}
-          <code style={{ backgroundColor: '#e0f2fe', padding: '2px 6px', borderRadius: '4px' }}>
+          <code style={{ backgroundColor: 'var(--fd-accent)', padding: '2px 6px', borderRadius: '4px' }}>
             {'<Preview src="name" />'}
           </code>
         </p>
       </div>
     </div>
   )
+}
+
+// Individual preview card - clickable thumbnail
+import { Link, useParams } from '@tanstack/react-router'
+
+function PreviewCard({ name }: { name: string }) {
+  return (
+    <Link
+      to={`/previews/${name}`}
+      style={{
+        display: 'block',
+        border: '1px solid var(--fd-border)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        backgroundColor: 'var(--fd-background)',
+        textDecoration: 'none',
+        color: 'inherit',
+        transition: 'box-shadow 0.2s, transform 0.2s',
+      }}
+      onMouseOver={(e) => {
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)'
+        e.currentTarget.style.transform = 'translateY(-2px)'
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.boxShadow = ''
+        e.currentTarget.style.transform = ''
+      }}
+    >
+      {/* Thumbnail preview */}
+      <div style={{
+        height: '180px',
+        overflow: 'hidden',
+        position: 'relative',
+        backgroundColor: 'var(--fd-muted)',
+        pointerEvents: 'none',
+      }}>
+        <iframe
+          src={`/_preview-runtime?src=${name}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            transform: 'scale(0.5)',
+            transformOrigin: 'top left',
+            width: '200%',
+            height: '200%',
+          }}
+          title={name}
+          loading="lazy"
+        />
+      </div>
+      {/* Card footer */}
+      <div style={{
+        padding: '12px 16px',
+        borderTop: '1px solid var(--fd-border)',
+        backgroundColor: 'var(--fd-card)',
+      }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 600, margin: 0 }}>
+          {name}
+        </h3>
+        <code style={{
+          fontSize: '11px',
+          color: 'var(--fd-muted-foreground)',
+          fontFamily: 'monospace',
+        }}>
+          previews/{name}/
+        </code>
+      </div>
+    </Link>
+  )
+}
+
+// Individual preview page - full view with devtools in header
+function PreviewPage() {
+  const { name } = useParams({ from: '/previews/$name' })
+  return <Preview src={name} height="calc(100vh - 200px)" showHeader />
 }
 
 // Root layout with custom lightweight Layout
@@ -196,6 +250,13 @@ const previewsRoute = createRoute({
   component: PreviewsCatalog,
 })
 
+// Individual preview route
+const previewDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/previews/$name',
+  component: PreviewPage,
+})
+
 // Create routes from pages
 const pageRoutes = pages.map((page: { route: string; file: string; title?: string; description?: string; frontmatter?: Record<string, unknown> }) => {
   const Component = getPageComponent(page.file)
@@ -212,7 +273,7 @@ const pageRoutes = pages.map((page: { route: string; file: string; title?: strin
 })
 
 // Create router
-const routeTree = rootRoute.addChildren([previewsRoute, ...pageRoutes])
+const routeTree = rootRoute.addChildren([previewsRoute, previewDetailRoute, ...pageRoutes])
 const router = createRouter({ routeTree })
 
 // Mount app - RouterProvider must be outermost so TanStack Router context is available
