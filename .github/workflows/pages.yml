@@ -33,7 +33,7 @@ jobs:
         run: bun run build
 
       - name: Build docs using local CLI
-        run: bun ./dist/cli.js build
+        run: bun ./dist/cli.js build --base /prev-cli/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

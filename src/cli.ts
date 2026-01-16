@@ -30,6 +30,7 @@ const { values, positionals } = parseArgs({
     port: { type: 'string', short: 'p' },
     days: { type: 'string', short: 'd' },
     cwd: { type: 'string', short: 'c' },
+    base: { type: 'string', short: 'b' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' }
   },
@@ -65,6 +66,7 @@ Config subcommands:
 Options:
   -c, --cwd <path>       Set working directory
   -p, --port <port>      Specify port (dev/preview)
+  -b, --base <path>      Base path for deployment (e.g., /repo-name/ for GitHub Pages)
   -d, --days <days>      Cache age threshold for clean (default: 30)
   -h, --help             Show this help message
   -v, --version          Show version number
@@ -452,7 +454,7 @@ async function main() {
         break
 
       case 'build':
-        await buildSite(rootDir, { include })
+        await buildSite(rootDir, { include, base: values.base })
         break
 
       case 'preview':

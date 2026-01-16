@@ -140,10 +140,11 @@ export interface ConfigOptions {
   mode: 'development' | 'production'
   port?: number
   include?: string[]
+  base?: string  // Base path for deployment (e.g., '/repo-name/' for GitHub Pages)
 }
 
 export async function createViteConfig(options: ConfigOptions): Promise<InlineConfig> {
-  const { rootDir, mode, port, include } = options
+  const { rootDir, mode, port, include, base } = options
   const cacheDir = await ensureCacheDir(rootDir)
   const config = loadConfig(rootDir)
 
@@ -154,6 +155,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
     root: rootDir,
     mode,
     cacheDir,
+    base: base || '/',  // Support subpath deployment (e.g., GitHub Pages)
     customLogger: createFriendlyLogger(),
     // Use 'silent' for production builds to hide file listing
     logLevel: mode === 'production' ? 'silent' : 'info',

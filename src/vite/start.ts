@@ -13,6 +13,7 @@ export interface DevOptions {
 
 export interface BuildOptions {
   include?: string[]
+  base?: string
 }
 
 function printWelcome(type: 'dev' | 'preview') {
@@ -139,7 +140,8 @@ export async function buildSite(rootDir: string, options: BuildOptions = {}) {
   const config = await createViteConfig({
     rootDir,
     mode: 'production',
-    include: options.include
+    include: options.include,
+    base: options.base
   })
 
   await build(config)
