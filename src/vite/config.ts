@@ -14,7 +14,7 @@ import { entryPlugin } from './plugins/entry-plugin'
 import { previewsPlugin } from './plugins/previews-plugin'
 import { createConfigPlugin } from './plugins/config-plugin'
 import { buildPreviewConfig } from './previews'
-import { loadConfig } from '../config'
+import { loadConfig, updateOrder } from '../config'
 // fumadocsPlugin removed - using custom lightweight layout
 
 // Create a friendly logger that filters out technical noise
@@ -168,6 +168,32 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
       pagesPlugin(rootDir, { include }),
       entryPlugin(rootDir),
       previewsPlugin(rootDir),
+      // API endpoint for config updates (drag-and-drop reordering)
+      {
+        name: 'prev-config-api',
+        configureServer(server) {
+          server.middlewares.use('/__prev/config', async (req, res) => {
+            if (req.method === 'POST') {
+              let body = ''
+              req.on('data', (chunk: Buffer | string) => { body += chunk })
+              req.on('end', () => {
+                try {
+                  const { path: pathKey, order } = JSON.parse(body)
+                  updateOrder(rootDir, pathKey, order)
+                  res.statusCode = 200
+                  res.end(JSON.stringify({ success: true }))
+                } catch (e) {
+                  res.statusCode = 400
+                  res.end(JSON.stringify({ error: String(e) }))
+                }
+              })
+              return
+            }
+            res.statusCode = 405
+            res.end()
+          })
+        }
+      },
       // Custom plugin for serving WASM-based preview routes
       {
         name: 'prev-preview-server',
