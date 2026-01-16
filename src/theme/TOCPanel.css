@@ -1,0 +1,146 @@
+/* Desktop dropdown */
+.toc-dropdown {
+  position: fixed;
+  left: 20px;
+  bottom: 80px;
+  width: 280px;
+  max-height: 400px;
+  background: var(--fd-background);
+  border: 1px solid var(--fd-border);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 9998;
+}
+
+.toc-dropdown-header,
+.toc-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--fd-border);
+  font-weight: 600;
+  color: var(--fd-foreground);
+}
+
+.toc-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: var(--fd-muted);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  color: var(--fd-muted-foreground);
+  cursor: pointer;
+}
+
+.toc-close-btn:hover {
+  background: var(--fd-accent);
+  color: var(--fd-foreground);
+}
+
+.toc-nav {
+  padding: 0.5rem;
+  overflow-y: auto;
+  max-height: 340px;
+}
+
+.toc-link {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  color: var(--fd-muted-foreground);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.toc-link:hover {
+  background: var(--fd-muted);
+  color: var(--fd-foreground);
+}
+
+.toc-link.active {
+  background: var(--fd-accent);
+  color: var(--fd-accent-foreground);
+  font-weight: 500;
+}
+
+.toc-folder-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--fd-foreground);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 0.375rem;
+  text-align: left;
+}
+
+.toc-folder-toggle:hover {
+  background: var(--fd-muted);
+}
+
+.folder-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.folder-chevron.open {
+  transform: rotate(90deg);
+}
+
+.toc-folder-children {
+  margin-left: 0.5rem;
+}
+
+.drop-target {
+  background: var(--fd-accent);
+  border-radius: 0.375rem;
+}
+
+/* Mobile full-screen overlay */
+.toc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.toc-overlay-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 80vh;
+  background: var(--fd-background);
+  border-radius: 1rem 1rem 0 0;
+  overflow: hidden;
+}
+
+.toc-overlay-content .toc-nav {
+  max-height: calc(80vh - 60px);
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .toc-dropdown {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .toc-overlay {
+    display: none;
+  }
+}
