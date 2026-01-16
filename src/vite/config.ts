@@ -332,6 +332,14 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'dayjs',
         '@terrastruct/d2',
       ],
+      exclude: [
+        // Virtual modules provided by our plugins - not real packages
+        'virtual:prev-config',
+        'virtual:prev-previews',
+        'virtual:prev-pages',
+        // Theme files that import virtual modules
+        '@prev/theme',
+      ],
     },
 
     ssr: {
