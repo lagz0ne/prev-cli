@@ -82,6 +82,9 @@ Configuration (.prev.yaml):
 
     theme: system          # light | dark | system (default: system)
     contentWidth: constrained  # constrained | full (default: constrained)
+    port: 3000             # Dev server port (overridden by -p flag)
+    include:               # Include dot-prefixed directories
+      - ".c3"
     hidden:                # Glob patterns for pages to hide
       - "internal/**"
       - "wip-*.md"
@@ -234,6 +237,11 @@ contentWidth: constrained
 
 # Port for dev server (can be overridden with -p flag)
 port: ${randomPort}
+
+# Include dot-prefixed directories (normally ignored)
+include: []
+  # - ".c3"
+  # - ".github"
 
 # Hidden pages (glob patterns)
 hidden: []
@@ -437,7 +445,8 @@ async function main() {
   // -p flag takes precedence over config.port
   const port = values.port ? parseInt(values.port, 10) : config.port
   const days = values.days ? parseInt(values.days, 10) : 30
-  const include = values.include || []
+  // Merge CLI includes with config includes (CLI flags add to config)
+  const include = [...(config.include || []), ...(values.include || [])]
 
   try {
     switch (command) {

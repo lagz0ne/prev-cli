@@ -2,6 +2,7 @@ export interface PrevConfig {
   theme: 'light' | 'dark' | 'system'
   contentWidth: 'constrained' | 'full'
   hidden: string[]
+  include: string[]
   order: Record<string, string[]>
   port?: number
 }
@@ -10,6 +11,7 @@ export const defaultConfig: PrevConfig = {
   theme: 'system',
   contentWidth: 'constrained',
   hidden: [],
+  include: [],
   order: {},
   port: undefined
 }
@@ -30,6 +32,10 @@ export function validateConfig(raw: unknown): PrevConfig {
 
     if (Array.isArray(obj.hidden)) {
       config.hidden = obj.hidden.filter((h): h is string => typeof h === 'string')
+    }
+
+    if (Array.isArray(obj.include)) {
+      config.include = obj.include.filter((i): i is string => typeof i === 'string')
     }
 
     if (obj.order && typeof obj.order === 'object') {
