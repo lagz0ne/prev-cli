@@ -164,7 +164,8 @@ function PreviewCard({ name }: { name: string }) {
 
   // In production, use pre-built static files; in dev, use WASM runtime
   const isDev = import.meta.env?.DEV ?? false
-  const previewUrl = isDev ? `/_preview-runtime?src=${name}` : `/_preview/${name}/`
+  const baseUrl = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '')
+  const previewUrl = isDev ? `/_preview-runtime?src=${name}` : `${baseUrl}/_preview/${name}/`
 
   // Set up WASM preview communication for thumbnail (dev mode only)
   React.useEffect(() => {

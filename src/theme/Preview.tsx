@@ -41,8 +41,11 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
   const isDev = import.meta.env?.DEV ?? false
   const effectiveMode = isDev ? mode : 'legacy'
 
+  // Get base URL for proper subpath deployment support
+  const baseUrl = (import.meta.env?.BASE_URL ?? '/').replace(/\/$/, '')
+
   // URL depends on mode - wasm mode needs src param, legacy uses pre-built files
-  const previewUrl = effectiveMode === 'wasm' ? `/_preview-runtime?src=${src}` : `/_preview/${src}/`
+  const previewUrl = effectiveMode === 'wasm' ? `/_preview-runtime?src=${src}` : `${baseUrl}/_preview/${src}/`
   const displayTitle = title || src
 
   // Calculate current width
