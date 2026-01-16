@@ -32,8 +32,8 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  // URL depends on mode
-  const previewUrl = mode === 'wasm' ? '/_preview-runtime' : `/_preview/${src}`
+  // URL depends on mode - wasm mode needs src param
+  const previewUrl = mode === 'wasm' ? `/_preview-runtime?src=${src}` : `/_preview/${src}`
   const displayTitle = title || src
 
   // Calculate current width

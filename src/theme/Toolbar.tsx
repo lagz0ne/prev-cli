@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
 import { previews } from 'virtual:prev-previews'
 import { IconMenu2, IconLayoutGrid, IconSun, IconMoon, IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react'
@@ -20,6 +20,8 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
   const [dragging, setDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0 })
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const location = useLocation()
+  const isOnPreviews = location.pathname.startsWith('/previews')
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return
@@ -63,7 +65,7 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
       </button>
 
       {previews && previews.length > 0 && (
-        <Link to="/previews" className="toolbar-btn" title="Previews">
+        <Link to="/previews" className={`toolbar-btn ${isOnPreviews ? 'active' : ''}`} title="Previews">
           <IconLayoutGrid size={18} />
         </Link>
       )}

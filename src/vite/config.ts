@@ -194,6 +194,40 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
           })
         }
       },
+      // SPA fallback for client-side routing
+      {
+        name: 'prev-spa-fallback',
+        configureServer(server) {
+          // This needs to run after Vite's static file serving but before 404
+          return () => {
+            server.middlewares.use((req, res, next) => {
+              const urlPath = req.url?.split('?')[0] || ''
+
+              // Don't intercept API routes, assets, or HMR
+              if (urlPath.startsWith('/__') ||
+                  urlPath.startsWith('/@') ||
+                  urlPath.startsWith('/node_modules') ||
+                  urlPath.includes('.')) {
+                return next()
+              }
+
+              // For SPA routes, serve the main index.html
+              const indexPath = path.join(srcRoot, 'theme/index.html')
+              if (existsSync(indexPath)) {
+                server.transformIndexHtml(req.url!, readFileSync(indexPath, 'utf-8'))
+                  .then(html => {
+                    res.setHeader('Content-Type', 'text/html')
+                    res.end(html)
+                  })
+                  .catch(next)
+                return
+              }
+
+              next()
+            })
+          }
+        }
+      },
       // Custom plugin for serving WASM-based preview routes
       {
         name: 'prev-preview-server',

@@ -6,6 +6,8 @@ import {
   createRootRoute,
   createRoute,
   Outlet,
+  redirect,
+  Navigate,
 } from '@tanstack/react-router'
 import { MDXProvider } from '@mdx-js/react'
 import { pages, sidebar } from 'virtual:prev-pages'
@@ -257,6 +259,10 @@ const previewDetailRoute = createRoute({
   component: PreviewPage,
 })
 
+// Check if we have an index page (route '/')
+const hasIndexPage = pages.some((page: { route: string }) => page.route === '/')
+const firstPage = pages[0] as { route: string; file: string; title?: string; description?: string; frontmatter?: Record<string, unknown> } | undefined
+
 // Create routes from pages
 const pageRoutes = pages.map((page: { route: string; file: string; title?: string; description?: string; frontmatter?: Record<string, unknown> }) => {
   const Component = getPageComponent(page.file)
@@ -272,9 +278,30 @@ const pageRoutes = pages.map((page: { route: string; file: string; title?: strin
   })
 })
 
-// Create router
-const routeTree = rootRoute.addChildren([previewsRoute, previewDetailRoute, ...pageRoutes])
-const router = createRouter({ routeTree })
+// If no index page exists, create a redirect from '/' to the first page
+const indexRedirectRoute = !hasIndexPage && firstPage ? createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/',
+  component: () => <Navigate to={firstPage.route} />,
+}) : null
+
+// Not found component - redirect to first page or index
+function NotFoundPage() {
+  const targetRoute = firstPage?.route || '/'
+  return <Navigate to={targetRoute} />
+}
+
+// Create router with notFoundRoute
+const routeTree = rootRoute.addChildren([
+  previewsRoute,
+  previewDetailRoute,
+  ...(indexRedirectRoute ? [indexRedirectRoute] : []),
+  ...pageRoutes,
+])
+const router = createRouter({
+  routeTree,
+  defaultNotFoundComponent: NotFoundPage,
+})
 
 // Mount app - RouterProvider must be outermost so TanStack Router context is available
 const container = document.getElementById('root')
