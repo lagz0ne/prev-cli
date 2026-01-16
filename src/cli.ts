@@ -218,6 +218,9 @@ function handleConfig(rootDir: string, subcommand: string | undefined) {
         process.exit(1)
       }
 
+      // Generate random port between 3000-9000
+      const randomPort = 3000 + Math.floor(Math.random() * 6000)
+
       // Create config with comments for documentation
       const configContent = `# prev-cli configuration
 # See: https://github.com/lagz0ne/prev-cli
@@ -228,8 +231,8 @@ theme: system
 # Content width: constrained | full
 contentWidth: constrained
 
-# Port for dev server (optional, can be overridden with -p flag)
-# port: 3000
+# Port for dev server (can be overridden with -p flag)
+port: ${randomPort}
 
 # Hidden pages (glob patterns)
 hidden: []
