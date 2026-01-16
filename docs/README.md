@@ -267,6 +267,39 @@ docs/
 - `.md` - Standard markdown
 - `.mdx` - Markdown with JSX support
 
+## Configuration
+
+Create a `.prev.yaml` file in your project root to customize prev:
+
+```yaml
+# Default theme: light | dark | system
+theme: system
+
+# Content width: constrained (72ch) | full
+contentWidth: constrained
+
+# Hide pages from navigation (still accessible by URL)
+hidden:
+  - "drafts/**"
+  - "**/internal-*.md"
+
+# Custom navigation order (auto-managed when you drag items)
+order:
+  "/":
+    - getting-started.md
+    - installation.md
+    - guides/
+```
+
+You can also hide individual pages via frontmatter:
+
+```markdown
+---
+title: Secret Page
+hidden: true
+---
+```
+
 ## Requirements
 
 - Node.js 18 or higher
