@@ -101,7 +101,9 @@ function isIndexFile(basename: string): boolean {
 }
 
 export function fileToRoute(file: string): string {
-  const withoutExt = file.replace(/\.mdx?$/, '')
+  // Strip leading dot from directory names (e.g., .c3 -> c3)
+  const normalizedFile = file.replace(/^\./, '').replace(/\/\./g, '/')
+  const withoutExt = normalizedFile.replace(/\.mdx?$/, '')
   const basename = path.basename(withoutExt).toLowerCase()
 
   // Root index or readme
