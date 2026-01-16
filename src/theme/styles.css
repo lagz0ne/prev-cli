@@ -523,6 +523,13 @@ body {
   max-width: 100%;
 }
 
+/* Mobile: add bottom padding for floating toolbar */
+@media (max-width: 768px) {
+  .prev-main-floating {
+    padding-bottom: 5rem;
+  }
+}
+
 .prev-main-floating .prev-content {
   max-width: 72ch;
   margin: 0 auto;
@@ -530,4 +537,33 @@ body {
 
 .full-width .prev-main-floating .prev-content {
   max-width: none;
+}
+
+/* Preview detail page - full available space */
+.preview-detail-page {
+  height: calc(100vh - 4rem);
+  padding: 0;
+  margin: -2rem; /* Negate parent padding */
+  margin-bottom: 3rem; /* Space for toolbar */
+}
+
+.preview-detail-page > div {
+  height: 100%;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 769px) {
+  .preview-detail-page {
+    margin: -2rem;
+    margin-bottom: 0;
+    height: calc(100vh - 2rem);
+    padding: 1rem;
+  }
+
+  .preview-detail-page > div {
+    border-radius: 12px;
+    border: 1px solid var(--fd-border);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  }
 }

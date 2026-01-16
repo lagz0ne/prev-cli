@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link } from '@tanstack/react-router'
 import { Icon, IconSprite } from './icons'
+import { useDevTools } from './DevToolsContext'
 import type { PreviewConfig, PreviewMessage, BuildResult } from '../preview-runtime/types'
 
 interface PreviewProps {
@@ -32,8 +33,16 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
 
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  // URL depends on mode - wasm mode needs src param
-  const previewUrl = mode === 'wasm' ? `/_preview-runtime?src=${src}` : `/_preview/${src}`
+  // Get devtools context for toolbar integration
+  const { setDevToolsContent } = useDevTools()
+
+  // In production, always use pre-built static previews
+  // In dev, use WASM runtime for live bundling
+  const isDev = import.meta.env?.DEV ?? false
+  const effectiveMode = isDev ? mode : 'legacy'
+
+  // URL depends on mode - wasm mode needs src param, legacy uses pre-built files
+  const previewUrl = effectiveMode === 'wasm' ? `/_preview-runtime?src=${src}` : `/_preview/${src}/`
   const displayTitle = title || src
 
   // Calculate current width
@@ -89,9 +98,9 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
     }
   }, [isDarkMode])
 
-  // WASM preview: Initialize and send config to iframe
+  // WASM preview: Initialize and send config to iframe (dev mode only)
   useEffect(() => {
-    if (mode !== 'wasm') return
+    if (effectiveMode !== 'wasm') return
 
     const iframe = iframeRef.current
     if (!iframe) return
@@ -141,8 +150,8 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
     }
   }, [mode, src])
 
-  const handleDeviceChange = (mode: DeviceMode) => {
-    setDeviceMode(mode)
+  const handleDeviceChange = (newMode: DeviceMode) => {
+    setDeviceMode(newMode)
     setCustomWidth(null)
     setShowSlider(false)
   }
@@ -152,7 +161,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
     setDeviceMode('desktop')
   }
 
-  // Icon button component
+  // Icon button component for devtools
   const IconButton = ({
     onClick,
     active,
@@ -275,6 +284,14 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
     </div>
   )
 
+  // Register DevTools in toolbar when on detail page (showHeader mode)
+  useEffect(() => {
+    if (showHeader && !isFullscreen) {
+      setDevToolsContent(<DevTools />)
+      return () => setDevToolsContent(null)
+    }
+  }, [showHeader, isFullscreen, deviceMode, customWidth, showSlider])
+
   // Calculate iframe style
   const getIframeContainerStyle = (): React.CSSProperties => {
     if (currentWidth === null) {
@@ -346,10 +363,11 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
   }
 
   // Non-fullscreen with showHeader (individual preview page)
+  // DevTools are rendered in the toolbar via context, not in this header
   if (showHeader) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Header with back button and devtools */}
+        {/* Header with back button and build status - DevTools are in toolbar */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -357,7 +375,6 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
           padding: '12px 16px',
           backgroundColor: 'var(--fd-card, #fafafa)',
           borderBottom: '1px solid var(--fd-border, #e4e4e7)',
-          borderRadius: '8px 8px 0 0',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link
@@ -385,7 +402,6 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
               <span style={{ fontSize: '12px', color: 'var(--fd-muted-foreground, #a1a1aa)' }}>{buildTime}ms</span>
             )}
           </div>
-          <DevTools />
         </div>
 
         {/* Build error display */}

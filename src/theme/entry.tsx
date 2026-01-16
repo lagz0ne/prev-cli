@@ -8,6 +8,9 @@ import {
   Outlet,
   redirect,
   Navigate,
+  useLocation,
+  useParams,
+  Link,
 } from '@tanstack/react-router'
 import { MDXProvider } from '@mdx-js/react'
 import { pages, sidebar } from 'virtual:prev-pages'
@@ -17,6 +20,7 @@ import { useDiagrams } from './diagrams'
 import { Layout } from './Layout'
 import { MetadataBlock } from './MetadataBlock'
 import { mdxComponents } from './mdx-components'
+import { DevToolsProvider } from './DevToolsContext'
 import './styles.css'
 
 // PageTree types (simplified from fumadocs-core)
@@ -151,10 +155,61 @@ function PreviewsCatalog() {
   )
 }
 
-// Individual preview card - clickable thumbnail
-import { Link, useParams } from '@tanstack/react-router'
+// Individual preview card - clickable thumbnail with WASM preview communication
+import type { PreviewConfig, PreviewMessage } from '../preview-runtime/types'
 
 function PreviewCard({ name }: { name: string }) {
+  const iframeRef = React.useRef<HTMLIFrameElement>(null)
+  const [isLoaded, setIsLoaded] = React.useState(false)
+
+  // In production, use pre-built static files; in dev, use WASM runtime
+  const isDev = import.meta.env?.DEV ?? false
+  const previewUrl = isDev ? `/_preview-runtime?src=${name}` : `/_preview/${name}/`
+
+  // Set up WASM preview communication for thumbnail (dev mode only)
+  React.useEffect(() => {
+    if (!isDev) {
+      // In production, just mark as loaded when iframe loads
+      const iframe = iframeRef.current
+      if (iframe) {
+        iframe.onload = () => setIsLoaded(true)
+      }
+      return
+    }
+
+    const iframe = iframeRef.current
+    if (!iframe) return
+
+    let configSent = false
+
+    const handleMessage = (event: MessageEvent) => {
+      const msg = event.data as PreviewMessage
+
+      if (msg.type === 'ready' && !configSent) {
+        configSent = true
+
+        fetch(`/_preview-config/${name}`)
+          .then(res => res.json())
+          .then((config: PreviewConfig) => {
+            iframe.contentWindow?.postMessage({ type: 'init', config } as PreviewMessage, '*')
+          })
+          .catch(() => {
+            // Silently fail for thumbnails
+          })
+      }
+
+      if (msg.type === 'built') {
+        setIsLoaded(true)
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [name, isDev])
+
   return (
     <Link
       to={`/previews/${name}`}
@@ -185,19 +240,40 @@ function PreviewCard({ name }: { name: string }) {
         backgroundColor: 'var(--fd-muted)',
         pointerEvents: 'none',
       }}>
+        {/* Loading spinner */}
+        {!isLoaded && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'var(--fd-muted)',
+            zIndex: 1,
+          }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              border: '2px solid var(--fd-border)',
+              borderTopColor: 'var(--fd-primary)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+            }} />
+          </div>
+        )}
         <iframe
-          src={`/_preview-runtime?src=${name}`}
+          ref={iframeRef}
+          src={previewUrl}
           style={{
-            width: '100%',
-            height: '100%',
             border: 'none',
             transform: 'scale(0.5)',
             transformOrigin: 'top left',
             width: '200%',
             height: '200%',
+            opacity: isLoaded ? 1 : 0,
+            transition: 'opacity 0.3s',
           }}
           title={name}
-          loading="lazy"
         />
       </div>
       {/* Card footer */}
@@ -221,15 +297,37 @@ function PreviewCard({ name }: { name: string }) {
   )
 }
 
-// Individual preview page - full view with devtools in header
+// Individual preview page - full view with devtools in toolbar
 function PreviewPage() {
-  const { name } = useParams({ from: '/previews/$name' })
-  return <Preview src={name} height="calc(100vh - 200px)" showHeader />
+  const params = useParams({ strict: false })
+  // Splat param captures the full path after /previews/
+  const name = (params as any)['_splat'] || (params as any)['*'] || params.name as string
+
+  if (!name) {
+    return <Navigate to="/previews" />
+  }
+
+  return (
+    <div className="preview-detail-page">
+      <Preview src={name} height="100%" showHeader />
+    </div>
+  )
 }
 
 // Root layout with custom lightweight Layout
 function RootLayout() {
   const pageTree = convertToPageTree(sidebar)
+  const location = useLocation()
+  const isPreviewDetail = location.pathname.startsWith('/previews/') && location.pathname !== '/previews'
+
+  // Preview detail page gets full viewport layout
+  if (isPreviewDetail) {
+    return (
+      <Layout tree={pageTree}>
+        <Outlet />
+      </Layout>
+    )
+  }
 
   return (
     <Layout tree={pageTree}>
@@ -252,10 +350,10 @@ const previewsRoute = createRoute({
   component: PreviewsCatalog,
 })
 
-// Individual preview route
+// Individual preview route (uses splat to capture nested paths like buttons/primary)
 const previewDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/previews/$name',
+  path: '/previews/$',
   component: PreviewPage,
 })
 
@@ -307,5 +405,9 @@ const router = createRouter({
 const container = document.getElementById('root')
 if (container) {
   const root = createRoot(container)
-  root.render(<RouterProvider router={router} />)
+  root.render(
+    <DevToolsProvider>
+      <RouterProvider router={router} />
+    </DevToolsProvider>
+  )
 }

@@ -43,11 +43,51 @@
 }
 
 .toolbar-devtools-slot {
-  display: contents;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding-left: 0.25rem;
+  margin-left: 0.25rem;
+  border-left: 1px solid var(--fd-border);
 }
 
 .toolbar-devtools-slot:empty {
   display: none;
+}
+
+/* Style devtools buttons in toolbar */
+.toolbar-devtools-slot button {
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--fd-muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-devtools-slot button:hover {
+  background: var(--fd-muted);
+  color: var(--fd-foreground);
+}
+
+/* Override active state for toolbar devtools buttons */
+.toolbar-devtools-slot button[style*="background-color: var(--fd-primary"] {
+  background: var(--fd-accent) !important;
+  color: var(--fd-accent-foreground) !important;
+}
+
+/* Adjust slider dropdown position when in toolbar (opens upward) */
+.toolbar-devtools-slot [style*="position: absolute"] {
+  bottom: 100% !important;
+  top: auto !important;
+  margin-bottom: 8px !important;
+  margin-top: 0 !important;
 }
 
 /* Hide width toggle on mobile */

@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
 import { previews } from 'virtual:prev-previews'
 import { Icon } from './icons'
+import { useDevTools } from './DevToolsContext'
 import './Toolbar.css'
 
 interface ToolbarProps {
@@ -22,6 +23,7 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
   const toolbarRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
   const isOnPreviews = location.pathname.startsWith('/previews')
+  const { devToolsContent } = useDevTools()
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, a')) return
@@ -70,8 +72,12 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
         </Link>
       )}
 
-      {/* Contextual devtools slot - populated by preview context */}
-      <div className="toolbar-devtools-slot" id="toolbar-devtools" />
+      {/* Contextual devtools - rendered from preview context */}
+      {devToolsContent && (
+        <div className="toolbar-devtools-slot">
+          {devToolsContent}
+        </div>
+      )}
 
       <button
         className="toolbar-btn desktop-only"
