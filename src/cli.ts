@@ -60,6 +60,33 @@ Options:
   -h, --help             Show this help message
   -v, --version          Show version number
 
+Floating Toolbar:
+  A draggable pill at the bottom of the screen with:
+    - TOC button: Opens navigation panel (dropdown on desktop, overlay on mobile)
+    - Previews button: Links to /previews catalog (if previews exist)
+    - Width toggle: Switch between constrained and full-width content
+    - Theme toggle: Switch between light and dark mode
+
+Configuration (.prev.yaml):
+  Create a .prev.yaml file in your docs root to customize behavior:
+
+    theme: system          # light | dark | system (default: system)
+    contentWidth: constrained  # constrained | full (default: constrained)
+    hidden:                # Glob patterns for pages to hide
+      - "internal/**"
+      - "wip-*.md"
+    order:                 # Custom page ordering
+      "/":
+        - "getting-started.md"
+        - "guides/"
+
+  Pages can also be hidden via frontmatter:
+    ---
+    hidden: true
+    ---
+
+  Drag pages in the TOC panel to reorder - changes auto-save to config.
+
 Previews:
   Previews must be in the previews/ directory at your project root.
   Each preview is a subfolder with React components:

@@ -7,6 +7,7 @@ const RESOLVED_CONFIG_ID = '\0' + VIRTUAL_CONFIG_ID
 export function createConfigPlugin(config: PrevConfig): Plugin {
   return {
     name: 'prev-config',
+    enforce: 'pre',
 
     resolveId(id) {
       if (id === VIRTUAL_CONFIG_ID) {

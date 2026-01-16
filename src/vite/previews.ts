@@ -22,14 +22,24 @@ export async function scanPreviews(rootDir: string): Promise<Preview[]> {
     return []
   }
 
-  const htmlFiles = await fg.glob('**/index.html', {
+  // Scan for both HTML-based and TSX/JSX-based previews
+  const entryFiles = await fg.glob('**/{index.html,App.tsx,App.jsx,index.tsx,index.jsx}', {
     cwd: previewsDir,
     ignore: ['node_modules/**']
   })
 
-  return htmlFiles.map(file => {
+  // Group by directory and deduplicate
+  const previewDirs = new Map<string, string>()
+  for (const file of entryFiles) {
     const dir = path.dirname(file)
-    const name = dir === '.' ? path.basename(path.dirname(path.join(previewsDir, file))) : dir
+    // Skip if already added (prioritize index.html over TSX)
+    if (!previewDirs.has(dir)) {
+      previewDirs.set(dir, file)
+    }
+  }
+
+  return Array.from(previewDirs.entries()).map(([dir, file]) => {
+    const name = dir === '.' ? path.basename(previewsDir) : dir
 
     return {
       name,
