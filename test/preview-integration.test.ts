@@ -23,23 +23,16 @@ Check out the preview:
 <Preview src="demo" />
 `)
 
-  // Create preview directory structure
+  // Create preview directory structure with React component
   await mkdir(join(testDir, 'previews/demo'), { recursive: true })
-  await writeFile(join(testDir, 'previews/demo/index.html'), `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Demo Preview</title>
-  <style>
-    body { font-family: system-ui; padding: 2rem; }
-    h1 { color: #3b82f6; }
-  </style>
-</head>
-<body>
-  <h1>Demo Component</h1>
-  <p>This is a preview component.</p>
-</body>
-</html>
+  await writeFile(join(testDir, 'previews/demo/App.tsx'), `export default function App() {
+  return (
+    <div style={{ fontFamily: 'system-ui', padding: '2rem' }}>
+      <h1 style={{ color: '#3b82f6' }}>Demo Component</h1>
+      <p>This is a preview component.</p>
+    </div>
+  )
+}
 `)
 })
 
@@ -115,7 +108,7 @@ describe('preview feature integration', () => {
     expect(previews).toHaveLength(1)
     expect(previews[0].name).toBe('demo')
     expect(previews[0].route).toBe('/_preview/demo')
-    expect(previews[0].htmlPath).toContain('previews/demo/index.html')
+    expect(previews[0].htmlPath).toContain('previews/demo/App.tsx')
   })
 
   test('dev server starts and serves main page', async () => {

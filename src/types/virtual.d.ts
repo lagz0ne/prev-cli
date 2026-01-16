@@ -17,6 +17,11 @@ declare module 'virtual:prev-pages' {
   export const sidebar: SidebarItem[]
 }
 
+declare module 'virtual:prev-page-modules' {
+  import type { ComponentType } from 'react'
+  export const pageModules: Record<string, { default: ComponentType }>
+}
+
 declare module 'virtual:prev-previews' {
   export interface Preview {
     name: string

@@ -374,6 +374,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         'virtual:prev-config',
         'virtual:prev-previews',
         'virtual:prev-pages',
+        'virtual:prev-page-modules',
         // Theme files that import virtual modules
         '@prev/theme',
       ],
