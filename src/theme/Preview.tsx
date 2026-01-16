@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { IconDeviceMobile, IconDeviceTablet, IconDeviceDesktop, IconArrowsMaximize, IconArrowsMinimize, IconAdjustmentsHorizontal, IconX, IconLoader2, IconArrowLeft } from '@tabler/icons-react'
 import { Link } from '@tanstack/react-router'
+import { Icon, IconSprite } from './icons'
 import type { PreviewConfig, PreviewMessage, BuildResult } from '../preview-runtime/types'
 
 interface PreviewProps {
@@ -193,7 +193,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
         active={deviceMode === 'mobile' && customWidth === null}
         title="Mobile (375px)"
       >
-        <IconDeviceMobile size={16} />
+        <Icon name="mobile" size={16} />
       </IconButton>
 
       <IconButton
@@ -201,7 +201,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
         active={deviceMode === 'tablet' && customWidth === null}
         title="Tablet (768px)"
       >
-        <IconDeviceTablet size={16} />
+        <Icon name="tablet" size={16} />
       </IconButton>
 
       <IconButton
@@ -209,7 +209,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
         active={deviceMode === 'desktop' && customWidth === null}
         title="Desktop (100%)"
       >
-        <IconDeviceDesktop size={16} />
+        <Icon name="desktop" size={16} />
       </IconButton>
 
       <div style={{ width: '1px', height: '16px', backgroundColor: 'var(--fd-border, #e4e4e7)', margin: '0 4px' }} />
@@ -221,7 +221,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
           active={showSlider || customWidth !== null}
           title="Custom width"
         >
-          <IconAdjustmentsHorizontal size={16} />
+          <Icon name="sliders" size={16} />
         </IconButton>
 
         {showSlider && (
@@ -246,7 +246,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
                 onClick={() => setShowSlider(false)}
                 style={{ padding: '2px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fd-muted-foreground, #a1a1aa)' }}
               >
-                <IconX size={12} />
+                <Icon name="x" size={12} />
               </button>
             </div>
             <input
@@ -270,7 +270,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
         active={isFullscreen}
         title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
       >
-        {isFullscreen ? <IconArrowsMinimize size={16} /> : <IconArrowsMaximize size={16} />}
+        <Icon name={isFullscreen ? 'minimize' : 'maximize'} size={16} />
       </IconButton>
     </div>
   )
@@ -371,7 +371,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
                 fontSize: '14px',
               }}
             >
-              <IconArrowLeft size={16} />
+              <Icon name="arrow-left" size={16} />
               Back
             </Link>
             <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--fd-border, #e4e4e7)' }} />
@@ -379,7 +379,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
               {displayTitle}
             </span>
             {mode === 'wasm' && buildStatus === 'building' && (
-              <IconLoader2 size={16} style={{ color: 'var(--fd-primary, #3b82f6)', animation: 'spin 1s linear infinite' }} />
+              <Icon name="loader" size={16} style={{ color: 'var(--fd-primary, #3b82f6)', animation: 'spin 1s linear infinite' }} />
             )}
             {mode === 'wasm' && buildTime && (
               <span style={{ fontSize: '12px', color: 'var(--fd-muted-foreground, #a1a1aa)' }}>{buildTime}ms</span>
@@ -464,7 +464,7 @@ export function Preview({ src, height = 400, title, mode = 'wasm', showHeader = 
             {displayTitle}
           </span>
           {mode === 'wasm' && buildStatus === 'building' && (
-            <IconLoader2 size={14} style={{ color: 'var(--fd-primary, #3b82f6)', animation: 'spin 1s linear infinite' }} />
+            <Icon name="loader" size={14} style={{ color: 'var(--fd-primary, #3b82f6)', animation: 'spin 1s linear infinite' }} />
           )}
           {mode === 'wasm' && buildStatus === 'error' && (
             <span style={{ fontSize: '12px', color: '#ef4444' }}>Error</span>

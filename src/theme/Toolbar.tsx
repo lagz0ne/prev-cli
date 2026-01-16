@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
 import { previews } from 'virtual:prev-previews'
-import { IconMenu2, IconLayoutGrid, IconSun, IconMoon, IconArrowsMaximize, IconArrowsMinimize } from '@tabler/icons-react'
+import { Icon } from './icons'
 import './Toolbar.css'
 
 interface ToolbarProps {
@@ -61,12 +61,12 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
         onClick={onTocToggle}
         title="Table of Contents"
       >
-        <IconMenu2 size={18} />
+        <Icon name="menu" size={18} />
       </button>
 
       {previews && previews.length > 0 && (
         <Link to="/previews" className={`toolbar-btn ${isOnPreviews ? 'active' : ''}`} title="Previews">
-          <IconLayoutGrid size={18} />
+          <Icon name="grid" size={18} />
         </Link>
       )}
 
@@ -78,7 +78,7 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
         onClick={onWidthToggle}
         title={isFullWidth ? 'Constrain width' : 'Full width'}
       >
-        {isFullWidth ? <IconArrowsMinimize size={18} /> : <IconArrowsMaximize size={18} />}
+        <Icon name={isFullWidth ? 'minimize' : 'maximize'} size={18} />
       </button>
 
       <button
@@ -86,7 +86,7 @@ export function Toolbar({ tree, onThemeToggle, onWidthToggle, isDark, isFullWidt
         onClick={onThemeToggle}
         title={isDark ? 'Light mode' : 'Dark mode'}
       >
-        {isDark ? <IconSun size={18} /> : <IconMoon size={18} />}
+        <Icon name={isDark ? 'sun' : 'moon'} size={18} />
       </button>
     </div>
   )

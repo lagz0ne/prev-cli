@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import type { PageTree } from 'fumadocs-core/server'
-import { IconX, IconChevronRight, IconFile, IconFolder } from '@tabler/icons-react'
+import { Icon } from './icons'
 
 interface TOCPanelProps {
   tree: PageTree.Root
@@ -83,7 +83,7 @@ export function TOCPanel({ tree, onClose }: TOCPanelProps) {
         <div className="toc-overlay-content" ref={panelRef}>
           <div className="toc-overlay-header">
             <span>Navigation</span>
-            <button className="toc-close-btn" onClick={onClose}><IconX size={16} /></button>
+            <button className="toc-close-btn" onClick={onClose}><Icon name="x" size={16} /></button>
           </div>
           <nav className="toc-nav">
             {orderedItems.map((item) => (
@@ -104,7 +104,7 @@ export function TOCPanel({ tree, onClose }: TOCPanelProps) {
     <div className="toc-dropdown" ref={panelRef}>
       <div className="toc-dropdown-header">
         <span>Navigation</span>
-        <button className="toc-close-btn" onClick={onClose}><IconX size={16} /></button>
+        <button className="toc-close-btn" onClick={onClose}><Icon name="x" size={16} /></button>
       </div>
       <nav className="toc-nav">
         {orderedItems.map((item, i) => (
@@ -146,8 +146,8 @@ function TOCItem({ item, location, onNavigate, depth = 0 }: TOCItemProps) {
           onClick={() => setIsOpen(!isOpen)}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
         >
-          <IconChevronRight size={14} className={`folder-chevron ${isOpen ? 'open' : ''}`} />
-          <IconFolder size={14} className="toc-icon" />
+          <Icon name="chevron-right" size={14} className={`folder-chevron ${isOpen ? 'open' : ''}`} />
+          <Icon name="folder" size={14} className="toc-icon" />
           {item.name}
         </button>
         {isOpen && (
@@ -176,7 +176,7 @@ function TOCItem({ item, location, onNavigate, depth = 0 }: TOCItemProps) {
       style={{ paddingLeft: `${depth * 12 + 12}px` }}
       onClick={onNavigate}
     >
-      <IconFile size={14} className="toc-icon" />
+      <Icon name="file" size={14} className="toc-icon" />
       {item.name}
     </Link>
   )

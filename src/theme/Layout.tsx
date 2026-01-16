@@ -3,6 +3,7 @@ import type { PageTree } from 'fumadocs-core/server'
 import { config } from 'virtual:prev-config'
 import { Toolbar } from './Toolbar'
 import { TOCPanel } from './TOCPanel'
+import { IconSprite } from './icons'
 import './Toolbar.css'
 import './TOCPanel.css'
 
@@ -39,6 +40,7 @@ export function Layout({ tree, children }: LayoutProps) {
 
   return (
     <div className="prev-layout-floating">
+      <IconSprite />
       <Toolbar
         tree={tree}
         onThemeToggle={handleThemeToggle}
