@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { startDev, buildSite, previewSite } from './vite/start'
 import { cleanCache, getCacheDir } from './utils/cache'
+import { loadConfig } from './config'
 
 // Get version from package.json
 function getVersion(): string {
@@ -332,7 +333,9 @@ async function main() {
     process.exit(0)
   }
 
-  const port = values.port ? parseInt(values.port, 10) : undefined
+  const config = loadConfig(rootDir)
+  // -p flag takes precedence over config.port
+  const port = values.port ? parseInt(values.port, 10) : config.port
   const days = values.days ? parseInt(values.days, 10) : 30
   const include = values.include || []
 

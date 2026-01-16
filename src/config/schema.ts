@@ -3,13 +3,15 @@ export interface PrevConfig {
   contentWidth: 'constrained' | 'full'
   hidden: string[]
   order: Record<string, string[]>
+  port?: number
 }
 
 export const defaultConfig: PrevConfig = {
   theme: 'system',
   contentWidth: 'constrained',
   hidden: [],
-  order: {}
+  order: {},
+  port: undefined
 }
 
 export function validateConfig(raw: unknown): PrevConfig {
@@ -37,6 +39,10 @@ export function validateConfig(raw: unknown): PrevConfig {
           config.order[key] = value.filter((v): v is string => typeof v === 'string')
         }
       }
+    }
+
+    if (typeof obj.port === 'number' && obj.port > 0 && obj.port < 65536) {
+      config.port = obj.port
     }
   }
 
