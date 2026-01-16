@@ -10,7 +10,8 @@
   "files": [
     "dist",
     "src/theme",
-    "src/ui"
+    "src/ui",
+    "src/preview-runtime"
   ],
   "keywords": [
     "documentation",
