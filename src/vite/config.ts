@@ -12,7 +12,9 @@ import { ensureCacheDir } from '../utils/cache'
 import { pagesPlugin } from './plugins/pages-plugin'
 import { entryPlugin } from './plugins/entry-plugin'
 import { previewsPlugin } from './plugins/previews-plugin'
+import { createConfigPlugin } from './plugins/config-plugin'
 import { buildPreviewConfig } from './previews'
+import { loadConfig } from '../config'
 // fumadocsPlugin removed - using custom lightweight layout
 
 // Create a friendly logger that filters out technical noise
@@ -143,6 +145,7 @@ export interface ConfigOptions {
 export async function createViteConfig(options: ConfigOptions): Promise<InlineConfig> {
   const { rootDir, mode, port, include } = options
   const cacheDir = await ensureCacheDir(rootDir)
+  const config = loadConfig(rootDir)
 
   // Note: Previews are now built separately by the previews plugin
   // using esbuild for standalone HTML output
@@ -161,6 +164,7 @@ export async function createViteConfig(options: ConfigOptions): Promise<InlineCo
         rehypePlugins: [rehypeHighlight]
       }),
       react(),
+      createConfigPlugin(config),
       pagesPlugin(rootDir, { include }),
       entryPlugin(rootDir),
       previewsPlugin(rootDir),

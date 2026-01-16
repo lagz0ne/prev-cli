@@ -27,6 +27,11 @@ declare module 'virtual:prev-previews' {
   export const previews: Preview[]
 }
 
+declare module 'virtual:prev-config' {
+  import type { PrevConfig } from '../config'
+  export const config: PrevConfig
+}
+
 declare module '*.mdx' {
   import type { ComponentType } from 'react'
   const component: ComponentType
